@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -53,20 +53,23 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   const { hideSidesheet } = useSidesheet();
 
   // If destination object exist, handleSubmit should call updateDestination and use attributes from the destination object for form initial values
-  const [
-    updateDestination,
-    { data: updateDestinationData, error: updateDestinationError },
-  ] = useUpdateDestination();
-
-  React.useEffect(() => {
-    if (updateDestinationData) {
+  const [updateDestination, { error: updateDestinationError }] = useUpdateDestination({
+    onCompleted: data => {
+      hideSidesheet();
       pushSnackbar({
         variant: 'success',
-        title: `Successfully updated ${updateDestinationData.updateDestination.displayName}`,
+        title: `Successfully updated ${data.updateDestination.displayName}`,
       });
-      hideSidesheet();
-    }
-  }, [updateDestinationData]);
+    },
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title:
+          extractErrorMessage(error) ||
+          'An unknown error has occurred while trying to update your destination',
+      });
+    },
+  });
 
   const handleSubmit = React.useCallback(
     async (values: BaseDestinationFormValues<Partial<DestinationConfigInput>>) => {

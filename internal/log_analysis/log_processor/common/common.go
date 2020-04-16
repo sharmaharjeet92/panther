@@ -1,7 +1,7 @@
 package common
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	MaxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+	MaxRetries     = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+	EventDelimiter = '\n'
 )
 
 // Session AWS Session that can be used by components of the system

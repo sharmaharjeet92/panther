@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import collections
 import gzip
 import json
@@ -114,7 +115,7 @@ class MatchedEventsBuffer:
 
 
 def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch]) -> None:
-    # 'severity', 'version', 'title', 'dedup_period' of a rule might differ if the rule was modified
+    # 'version', 'title', 'dedup_period' of a rule might differ if the rule was modified
     # while the rules engine was running. We pick the first encountered set of values.
     group_info = MatchingGroupInfo(
         rule_id=key.rule_id,
@@ -122,7 +123,6 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch
         log_type=key.log_type,
         dedup=key.dedup,
         dedup_period_mins=events[0].dedup_period_mins,
-        severity=events[0].severity,
         num_matches=len(events),
         title=events[0].title,
         processing_time=time

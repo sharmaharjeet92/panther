@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,19 +29,19 @@ export const SOURCE_LABEL_REGEX = new RegExp('^[a-zA-Z0-9- ]+$');
 
 export const INCLUDE_UPPERCASE_REGEX = new RegExp('(?=.*[A-Z])');
 
-export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('(?=.*[!@#\\$%\\^&\\*;:,.<>?/])');
+export const INCLUDE_SPECIAL_CHAR_REGEX = new RegExp('[^\\d\\sA-Za-z]');
 
 export const DEFAULT_POLICY_FUNCTION =
-  'def policy(resource):\n\t# Write your code here.\n\treturn True';
+  'def policy(resource):\n\t# Return False if the resource is non-compliant, which will trigger alerts/remediation.\n\treturn True';
 
 export const DEFAULT_RULE_FUNCTION =
-  'def rule(event):\n\t# Write your rule code here.\n\treturn False';
+  'def rule(event):\n\t# Return True to match the log event and trigger an alert.\n\treturn False';
 
 export const DEFAULT_TITLE_FUNCTION =
-  "def title(event):\n\t# Write code here for alert title generation.\n\treturn ''";
+  "def title(event):\n\t# (Optional) Return a string which will be shown as the alert title.\n\treturn ''";
 
 export const DEFAULT_DEDUP_FUNCTION =
-  "def dedup(event):\n\t# Write code here for generating dedup string.\n\treturn ''";
+  "def dedup(event):\n\t# (Optional) Return a string which will de-duplicate similar alerts.\n\treturn ''";
 
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',

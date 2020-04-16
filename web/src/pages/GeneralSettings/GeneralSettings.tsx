@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,27 +36,19 @@ const GeneralSettingsContainer: React.FC = () => {
     data: getGeneralSettingsData,
   } = useGetGeneralSettings();
 
-  const [
-    updateGeneralSettings,
-    { error: updateGeneralSettingsError, data: updateGeneralSettingsData },
-  ] = useUpdateGeneralSettings();
-
-  React.useEffect(() => {
-    if (updateGeneralSettingsData) {
+  const [updateGeneralSettings] = useUpdateGeneralSettings({
+    onCompleted: () => {
       pushSnackbar({ variant: 'success', title: `Successfully updated company information` });
-    }
-  }, [updateGeneralSettingsData]);
-
-  React.useEffect(() => {
-    if (updateGeneralSettingsError) {
+    },
+    onError: error => {
       pushSnackbar({
         variant: 'error',
         title:
-          extractErrorMessage(updateGeneralSettingsError) ||
+          extractErrorMessage(error) ||
           'Failed to update company information due to an unknown error',
       });
-    }
-  }, [updateGeneralSettingsError]);
+    },
+  });
 
   if (getGeneralSettingsLoading) {
     return <GeneralSettingsPageSkeleton />;
@@ -83,19 +75,35 @@ const GeneralSettingsContainer: React.FC = () => {
           <Panel title="About Panther" size="large">
             <Box width={500} m="auto">
               <Flex mb={6}>
-                <Text color="grey300" size="large" width={80}>
+                <Text color="grey300" size="large" width={150}>
                   Plan
                 </Text>
                 <Text color="grey500" size="large" fontWeight="bold">
                   Community
                 </Text>
               </Flex>
-              <Flex>
-                <Text color="grey300" size="large" width={80}>
+              <Flex mb={6}>
+                <Text color="grey300" size="large" width={150}>
                   Version
                 </Text>
                 <Text color="grey500" size="large" fontWeight="bold">
                   {process.env.PANTHER_VERSION || 'N/A'}
+                </Text>
+              </Flex>
+              <Flex mb={6}>
+                <Text color="grey300" size="large" width={150}>
+                  AWS Account ID
+                </Text>
+                <Text color="grey500" size="large" fontWeight="bold">
+                  {process.env.AWS_ACCOUNT_ID || 'N/A'}
+                </Text>
+              </Flex>
+              <Flex>
+                <Text color="grey300" size="large" width={150}>
+                  AWS Region
+                </Text>
+                <Text color="grey500" size="large" fontWeight="bold">
+                  {process.env.AWS_REGION || 'N/A'}
                 </Text>
               </Flex>
             </Box>

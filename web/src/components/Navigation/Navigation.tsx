@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -40,7 +40,7 @@ const Navigation = () => {
 
   const isCompliancePage = pathname.includes(urls.compliance.home());
   const isLogAnalysisPage = pathname.includes(urls.logAnalysis.home());
-  const isSettingsPage = pathname.includes(urls.settings.overview());
+  const isSettingsPage = pathname.includes(urls.settings.home());
   const [secondaryNav, setSecondaryNav] = React.useState<NavKeys>(null);
 
   React.useEffect(() => {

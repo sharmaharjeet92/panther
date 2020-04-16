@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -54,7 +54,9 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
           })
         }
       >
-        <MenuItem variant="default">Force password reset</MenuItem>
+        {user.status !== 'FORCE_CHANGE_PASSWORD' && (
+          <MenuItem variant="default">Force password reset</MenuItem>
+        )}
       </Dropdown.Item>
       <Dropdown.Item
         onSelect={() =>

@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,11 +28,13 @@ export type ResetUserPasswordVariables = {
   id: Types.Scalars['ID'];
 };
 
-export type ResetUserPassword = Pick<Types.Mutation, 'resetUserPassword'>;
+export type ResetUserPassword = { resetUserPassword: Pick<Types.User, 'id'> };
 
 export const ResetUserPasswordDocument = gql`
   mutation ResetUserPassword($id: ID!) {
-    resetUserPassword(id: $id)
+    resetUserPassword(id: $id) {
+      id
+    }
   }
 `;
 export type ResetUserPasswordMutationFn = ApolloReactCommon.MutationFunction<

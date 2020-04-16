@@ -1,7 +1,7 @@
 package processor
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -110,7 +110,7 @@ func (p *Processor) run(outputChan chan *parsers.PantherLog) error {
 	stream := bufio.NewReader(p.input.Reader)
 	for {
 		var line string
-		line, err = stream.ReadString('\n')
+		line, err = stream.ReadString(common.EventDelimiter)
 		if err != nil {
 			if err == io.EOF { // we are done
 				err = nil // not really an error

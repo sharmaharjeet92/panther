@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,19 +23,19 @@ import shootFireworks from 'Helpers/fireworks';
 import { useGetErrorReportingConsent } from './graphql/getErrorReportingConsent.generated';
 
 const PromptController: React.FC = () => {
-  // We are intentionally over-fetching, in order to proactively add this data to the cache
-  const { data } = useGetErrorReportingConsent();
   const { showModal } = useModal();
+  // We are intentionally over-fetching, in order to proactively add this data to the cache
+  useGetErrorReportingConsent({
+    onCompleted: data => {
+      if (data?.generalSettings.errorReportingConsent === null) {
+        // Show analytics consent modal
+        showModal({ modal: MODALS.ANALYTICS_CONSENT });
 
-  React.useEffect(() => {
-    if (data?.generalSettings.errorReportingConsent === null) {
-      // Show analytics consent modal
-      showModal({ modal: MODALS.ANALYTICS_CONSENT });
-
-      // Welcome the first user while singing Katy Perry
-      shootFireworks();
-    }
-  }, [data]);
+        // Welcome the first user while singing Katy Perry
+        shootFireworks();
+      }
+    },
+  });
 
   return null;
 };

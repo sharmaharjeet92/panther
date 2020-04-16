@@ -105,7 +105,7 @@
     "history": "^4.10.1",
     "linkifyjs": "^2.1.9",
     "lodash-es": "^4.17.15",
-    "pouncejs": "^0.13.4",
+    "pouncejs": "^0.13.7",
     "qrcode.react": "^1.0.0",
     "query-string": "^6.10.1",
     "react": "^16.12.0",
@@ -124,6 +124,8 @@
     "serve": "node web/scripts/serve.js",
     "graphql-codegen": "graphql-codegen --config web/codegen.yml",
     "graphql-codegen:watch": "npm run graphql-codegen -- --watch",
-    "validate": "eslint --config web/.eslintrc.js \"web/**/*.{ts,js,tsx}\" && prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\" && tsc -p web"
+    "eslint": "eslint --config web/.eslintrc.js \"web/**/*.{ts,js,tsx}\"",
+    "tsc": "tsc -p web",
+    "validate": "npm run eslint && prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\" && npm run tsc"
   }
 }

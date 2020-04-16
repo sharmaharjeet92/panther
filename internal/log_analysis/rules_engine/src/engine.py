@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -59,7 +59,6 @@ class Engine:
                     dedup=result.dedup_string,  # type: ignore
                     dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
-                    severity=rule.rule_severity,
                     title=result.title
                 )
                 matched.append(match)

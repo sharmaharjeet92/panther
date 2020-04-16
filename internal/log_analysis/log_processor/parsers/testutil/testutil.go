@@ -1,7 +1,7 @@
 package testutil
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -50,10 +50,10 @@ func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*
 	}
 
 	// serialize as JSON using back pointers to compare
-	expectedJSON, err := jsoniter.Marshal(expectedEvent.Event())
+	expectedJSON, err := jsoniter.MarshalToString(expectedEvent.Event())
 	require.NoError(t, err)
-	eventJSON, err := jsoniter.Marshal(event.Event())
+	eventJSON, err := jsoniter.MarshalToString(event.Event())
 	require.NoError(t, err)
 
-	require.JSONEq(t, (string)(expectedJSON), (string)(eventJSON))
+	require.JSONEq(t, expectedJSON, eventJSON)
 }

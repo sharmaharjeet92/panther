@@ -1,4 +1,4 @@
-# Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
 # Copyright (C) 2020 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import hashlib
 import os
 from dataclasses import dataclass
@@ -35,7 +36,6 @@ _ALERT_CREATION_TIME_ATTR_NAME = 'alertCreationTime'
 _ALERT_UPDATE_TIME_ATTR_NAME = 'alertUpdateTime'
 _ALERT_COUNT_ATTR_NAME = 'alertCount'
 _ALERT_EVENT_COUNT = 'eventCount'
-_ALERT_SEVERITY_ATTR_NAME = 'severity'
 _ALERT_LOG_TYPES = 'logTypes'
 _ALERT_TITLE = 'title'
 
@@ -49,7 +49,6 @@ class MatchingGroupInfo:
     log_type: str
     dedup: str
     dedup_period_mins: int
-    severity: str
     num_matches: int
     title: Optional[str]
     processing_time: datetime
@@ -84,10 +83,10 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     2. This rule with the same dedup string has fired before, but after the dedup period has expired
     """
     condition_expression = '(#1 < :1) OR (attribute_not_exists(#2))'
-    update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
+    update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10'
 
     if group_info.title:
-        update_expression += ', #12=:12'
+        update_expression += ', #11=:11'
     expresion_attribute_names = {
         '#1': _ALERT_CREATION_TIME_ATTR_NAME,
         '#2': _PARTITION_KEY_NAME,
@@ -97,13 +96,12 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         '#6': _ALERT_CREATION_TIME_ATTR_NAME,
         '#7': _ALERT_UPDATE_TIME_ATTR_NAME,
         '#8': _ALERT_EVENT_COUNT,
-        '#9': _ALERT_SEVERITY_ATTR_NAME,
-        '#10': _ALERT_LOG_TYPES,
-        '#11': _RULE_VERSION_ATTR_NAME,
+        '#9': _ALERT_LOG_TYPES,
+        '#10': _RULE_VERSION_ATTR_NAME,
     }
 
     if group_info.title:
-        expresion_attribute_names['#12'] = _ALERT_TITLE
+        expresion_attribute_names['#11'] = _ALERT_TITLE
 
     expression_attribute_values = {
         ':1':
@@ -130,18 +128,15 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
             'N': '{}'.format(group_info.num_matches)
         },
         ':9': {
-            'S': group_info.severity
-        },
-        ':10': {
             'SS': [group_info.log_type]
         },
-        ':11': {
+        ':10': {
             'S': group_info.rule_version
         },
     }
 
     if group_info.title:
-        expression_attribute_values[':12'] = {'S': group_info.title}
+        expression_attribute_values[':11'] = {'S': group_info.title}
 
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,

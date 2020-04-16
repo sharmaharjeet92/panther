@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,11 +21,10 @@ import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import PolicyForm from 'Components/forms/PolicyForm';
+import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import { PolicyDetails } from 'Generated/schema';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
-import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import useRouter from 'Hooks/useRouter';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
@@ -49,7 +48,7 @@ export const initialValues: PolicyDetails = {
 const CreatePolicyPage: React.FC = () => {
   const { history } = useRouter();
   const [createPolicy, { error }] = useCreatePolicy({
-    refetchQueries: [getOperationName(ListPoliciesDocument)],
+    refetchQueries: [{ query: ListPoliciesDocument, variables: { input: {} } }],
     onCompleted: data => history.push(urls.compliance.policies.details(data.addPolicy.id)),
   });
 

@@ -1,7 +1,7 @@
 package processor
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -119,8 +119,10 @@ func shouldTriggerActions(event *models.ComplianceNotification) (bool, error) {
 			ResourceID: *event.ResourceID,
 			HTTPClient: httpClient,
 		})
-
 	if err != nil {
+		if _, ok := err.(*complianceoperations.GetStatusNotFound); ok {
+			return false, nil
+		}
 		return false, err
 	}
 

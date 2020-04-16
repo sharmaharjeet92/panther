@@ -1,7 +1,7 @@
 package models
 
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,23 +33,17 @@ type LambdaInput struct {
 // Example:
 // {
 //     "getAlert": {
-// 	    "alertId": "ruleId-2"
+// 	    "alertId": "ruleId-2",
+//         "eventsPageSize": 20
 //     }
 // }
 type GetAlertInput struct {
 	AlertID                 *string `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
-	EventsPageSize          *int    `json:"eventsPageSize,omitempty"  validate:"omitempty,min=1,max=50"`
+	EventsPageSize          *int    `json:"eventsPageSize"  validate:"required,min=1,max=50"`
 	EventsExclusiveStartKey *string `json:"eventsExclusiveStartKey,omitempty"`
 }
 
 // GetAlertOutput retrieves details for a single alert.
-//
-// Example:
-// {
-//     "getAlert": {
-// 	    "alertId": "ruleId-2"
-//     }
-// }
 type GetAlertOutput = Alert
 
 // ListAlertsInput lists the alerts in reverse-chronological order (newest to oldest)
@@ -83,23 +77,21 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID       *string    `json:"alertId"`
-	RuleID        *string    `json:"ruleId"`
-	DedupString   *string    `json:"dedupString"`
-	CreationTime  *time.Time `json:"creationTime"`
-	UpdateTime    *time.Time `json:"updateTime"`
-	EventsMatched *int       `json:"eventsMatched"`
-	Severity      *string    `json:"severity"`
+	AlertID         *string    `json:"alertId" validate:"required"`
+	RuleID          *string    `json:"ruleId" validate:"required"`
+	RuleDisplayName *string    `json:"ruleDisplayName,omitempty"`
+	RuleVersion     *string    `json:"ruleVersion" validate:"required"`
+	DedupString     *string    `json:"dedupString,omitempty"`
+	CreationTime    *time.Time `json:"creationTime" validate:"required"`
+	UpdateTime      *time.Time `json:"updateTime" validate:"required"`
+	EventsMatched   *int       `json:"eventsMatched" validate:"required"`
+	Severity        *string    `json:"severity" validate:"required"`
+	Title           *string    `json:"title" validate:"required"`
 }
 
 // Alert contains the details of an alert
 type Alert struct {
-	AlertID                *string    `json:"alertId"`
-	RuleID                 *string    `json:"ruleId"`
-	DedupString            *string    `json:"dedupString"`
-	CreationTime           *time.Time `json:"creationTime"`
-	UpdateTime             *time.Time `json:"updateTime"`
-	EventsMatched          *int       `json:"eventsMatched"`
-	Events                 []*string  `json:"events"`
-	EventsLastEvaluatedKey *string    `json:"eventsLastEvaluatedKey,omitempty"`
+	AlertSummary
+	Events                 []*string `json:"events" validate:"required"`
+	EventsLastEvaluatedKey *string   `json:"eventsLastEvaluatedKey,omitempty"`
 }

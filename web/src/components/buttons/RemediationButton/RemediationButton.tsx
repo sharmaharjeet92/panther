@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -43,10 +43,7 @@ const RemediationButton: React.FC<RemediationButtonProps> = ({
   const { pushSnackbar } = useSnackbar();
 
   // Prepare the remediation mutation.
-  const [
-    remediateResource,
-    { data: remediationSuccess, error: remediationError, loading: remediationInProgress },
-  ] = useRemediateResource({
+  const [remediateResource, { loading: remediationInProgress }] = useRemediateResource({
     mutation: RemediateResourceDocument,
     awaitRefetchQueries: true,
     refetchQueries: [
@@ -59,22 +56,16 @@ const RemediationButton: React.FC<RemediationButtonProps> = ({
         policyId,
       },
     },
-  });
-
-  React.useEffect(() => {
-    if (remediationError) {
+    onCompleted: () => {
+      pushSnackbar({ variant: 'success', title: 'Remediation has been applied successfully' });
+    },
+    onError: remediationError => {
       pushSnackbar({
         variant: 'error',
         title: extractErrorMessage(remediationError) || 'Failed to apply remediation',
       });
-    }
-  }, [remediationError]);
-
-  React.useEffect(() => {
-    if (remediationSuccess) {
-      pushSnackbar({ variant: 'success', title: 'Remediation has been applied successfully' });
-    }
-  }, [remediationSuccess]);
+    },
+  });
 
   return (
     <Button

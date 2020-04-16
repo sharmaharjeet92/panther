@@ -1,5 +1,5 @@
 /**
- * Panther is a scalable, powerful, cloud-native SIEM written in Golang/React.
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
@@ -109,6 +109,9 @@ export const minutesToString = (minutes: number) =>
 export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>
   mapValues(obj, v => (Array.isArray(v) ? v.join(',') : v));
 
+/** URI encoding for specified fields in object */
+export const encodeParams = (obj: { [key: string]: any }, fields: [string]) =>
+  mapValues(obj, (v, key) => (fields.includes(key) ? encodeURIComponent(v) : v));
 /**
  * makes sure that it properly formats a JSON struct in order to be properly displayed within the
  * editor
@@ -205,7 +208,7 @@ export const extractErrorMessage = (error: ApolloError | ErrorResponse) => {
 
   // If there are no networkErrors or graphQL errors, then show the fallback
   if (!error.graphQLErrors || !error.graphQLErrors.length) {
-    return 'A unpredicted server error has occured';
+    return 'A unpredicted server error has occurred';
   }
 
   // isolate the first GraphQL error. Currently all of our APIs return a single error. If we ever

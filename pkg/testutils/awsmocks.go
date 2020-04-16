@@ -1,26 +1,32 @@
 package testutils
 
 /**
- * Copyright 2020 Panther Labs Inc
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 import (
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -47,4 +53,29 @@ type LambdaMock struct {
 func (m *LambdaMock) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
+}
+
+type DynamoDBMock struct {
+	dynamodbiface.DynamoDBAPI
+	mock.Mock
+}
+
+func (m *DynamoDBMock) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.PutItemOutput), args.Error(1)
+}
+
+func (m *DynamoDBMock) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.UpdateItemOutput), args.Error(1)
+}
+
+type SqsMock struct {
+	sqsiface.SQSAPI
+	mock.Mock
+}
+
+func (m *SqsMock) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
 }

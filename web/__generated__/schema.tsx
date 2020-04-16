@@ -1,3 +1,21 @@
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 export type Maybe<T> = T | null;
 export type RequireFields<T, K extends keyof T> = { [X in Exclude<keyof T, K>]?: T[X] } &
@@ -484,7 +502,7 @@ export type Mutation = {
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
   remediateResource?: Maybe<Scalars['Boolean']>;
-  resetUserPassword?: Maybe<Scalars['Boolean']>;
+  resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
   updateDestination?: Maybe<Destination>;
@@ -1688,7 +1706,7 @@ export type MutationResolvers<
     RequireFields<MutationRemediateResourceArgs, 'input'>
   >;
   resetUserPassword?: Resolver<
-    Maybe<ResolversTypes['Boolean']>,
+    ResolversTypes['User'],
     ParentType,
     ContextType,
     RequireFields<MutationResetUserPasswordArgs, 'id'>
