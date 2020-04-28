@@ -80,7 +80,7 @@ export type AlertSummary = {
   title: Scalars['String'];
   updateTime: Scalars['AWSDateTime'];
   ruleId?: Maybe<Scalars['String']>;
-  severity?: Maybe<Scalars['String']>;
+  severity?: Maybe<SeverityEnum>;
 };
 
 export enum AnalysisTypeEnum {
@@ -502,7 +502,6 @@ export type Mutation = {
   deleteRule?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
-  queryDone: QueryDone;
   remediateResource?: Maybe<Scalars['Boolean']>;
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
@@ -563,10 +562,6 @@ export type MutationDeleteUserArgs = {
 
 export type MutationInviteUserArgs = {
   input?: Maybe<InviteUserInput>;
-};
-
-export type MutationQueryDoneArgs = {
-  input: QueryDoneInput;
 };
 
 export type MutationRemediateResourceArgs = {
@@ -825,19 +820,6 @@ export type QueryRulesArgs = {
   input?: Maybe<ListRulesInput>;
 };
 
-export type QueryDone = {
-  __typename?: 'QueryDone';
-  userData: Scalars['String'];
-  queryId: Scalars['String'];
-  workflowId: Scalars['String'];
-};
-
-export type QueryDoneInput = {
-  userData: Scalars['String'];
-  queryId: Scalars['String'];
-  workflowId: Scalars['String'];
-};
-
 export type RemediateResourceInput = {
   policyId: Scalars['ID'];
   resourceId: Scalars['ID'];
@@ -955,15 +937,6 @@ export type SqsConfig = {
 
 export type SqsConfigInput = {
   queueUrl: Scalars['String'];
-};
-
-export type Subscription = {
-  __typename?: 'Subscription';
-  queryDone?: Maybe<QueryDone>;
-};
-
-export type SubscriptionQueryDoneArgs = {
-  userData: Scalars['String'];
 };
 
 export type SuppressPoliciesInput = {
@@ -1135,6 +1108,7 @@ export type ResolversTypes = {
   ListAlertsInput: ListAlertsInput;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
+  SeverityEnum: SeverityEnum;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1148,7 +1122,6 @@ export type ResolversTypes = {
   OpsgenieConfig: ResolverTypeWrapper<OpsgenieConfig>;
   MsTeamsConfig: ResolverTypeWrapper<MsTeamsConfig>;
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
-  SeverityEnum: SeverityEnum;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
@@ -1217,8 +1190,6 @@ export type ResolversTypes = {
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
   InviteUserInput: InviteUserInput;
-  QueryDoneInput: QueryDoneInput;
-  QueryDone: ResolverTypeWrapper<QueryDone>;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
@@ -1231,7 +1202,6 @@ export type ResolversTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
-  Subscription: ResolverTypeWrapper<{}>;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1248,6 +1218,7 @@ export type ResolversParentTypes = {
   ListAlertsInput: ListAlertsInput;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
+  SeverityEnum: SeverityEnum;
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;
@@ -1261,7 +1232,6 @@ export type ResolversParentTypes = {
   OpsgenieConfig: OpsgenieConfig;
   MsTeamsConfig: MsTeamsConfig;
   AsanaConfig: AsanaConfig;
-  SeverityEnum: SeverityEnum;
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
   ComplianceIntegration: ComplianceIntegration;
@@ -1330,8 +1300,6 @@ export type ResolversParentTypes = {
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
   InviteUserInput: InviteUserInput;
-  QueryDoneInput: QueryDoneInput;
-  QueryDone: QueryDone;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
@@ -1344,7 +1312,6 @@ export type ResolversParentTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
-  Subscription: {};
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1383,7 +1350,7 @@ export type AlertSummaryResolvers<
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  severity?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -1734,12 +1701,6 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationInviteUserArgs, never>
   >;
-  queryDone?: Resolver<
-    ResolversTypes['QueryDone'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationQueryDoneArgs, 'input'>
-  >;
   remediateResource?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
     ParentType,
@@ -2066,16 +2027,6 @@ export type QueryResolvers<
   users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
 };
 
-export type QueryDoneResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['QueryDone'] = ResolversParentTypes['QueryDone']
-> = {
-  userData?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  queryId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  workflowId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
-};
-
 export type ResourceDetailsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ResourceDetails'] = ResolversParentTypes['ResourceDetails']
@@ -2195,19 +2146,6 @@ export type SqsConfigResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
-export type SubscriptionResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']
-> = {
-  queryDone?: SubscriptionResolver<
-    Maybe<ResolversTypes['QueryDone']>,
-    'queryDone',
-    ParentType,
-    ContextType,
-    RequireFields<SubscriptionQueryDoneArgs, 'userData'>
-  >;
-};
-
 export type TestPolicyResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['TestPolicyResponse'] = ResolversParentTypes['TestPolicyResponse']
@@ -2288,7 +2226,6 @@ export type Resolvers<ContextType = any> = {
   PolicyUnitTest?: PolicyUnitTestResolvers<ContextType>;
   PolicyUnitTestError?: PolicyUnitTestErrorResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
-  QueryDone?: QueryDoneResolvers<ContextType>;
   ResourceDetails?: ResourceDetailsResolvers<ContextType>;
   ResourceSummary?: ResourceSummaryResolvers<ContextType>;
   RuleDetails?: RuleDetailsResolvers<ContextType>;
@@ -2298,7 +2235,6 @@ export type Resolvers<ContextType = any> = {
   SlackConfig?: SlackConfigResolvers<ContextType>;
   SnsConfig?: SnsConfigResolvers<ContextType>;
   SqsConfig?: SqsConfigResolvers<ContextType>;
-  Subscription?: SubscriptionResolvers<ContextType>;
   TestPolicyResponse?: TestPolicyResponseResolvers<ContextType>;
   UploadPoliciesResponse?: UploadPoliciesResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
