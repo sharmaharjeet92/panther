@@ -1,0 +1,54 @@
+# Need an S3 bucket for SAM artifacts, but they are just temporary
+#
+# Combined size of SAR S3 artifacts cannot exceed 52428800 bytes
+#
+# Package: AWS_REGION=us-east-2 dev -- sam package -t master.yml --s3-bucket panther-austin-sam --output-template-file sam-master.yml
+# Publish: AWS_REGION=us-east-2 dev -- sam publish -t sam-bootstrap-gateway.yml --region us-east-2
+# Deploy: AWS_REGION=us-east-2 dev -- sam deploy --template-file sam-master.yml --stack-name panther-sar --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+
+# TODO: python layer
+# TODO: EC2 flow logs
+# TODO: ECS cluster
+
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Master SAR template
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: panther
+    Description: Master Panther template
+    Author: Panther Labs
+    HomePageUrl: https://runpanther.io
+    SemanticVersion: 0.1.2
+    SourceCodeUrl: https://github.com/panther-labs/panther
+
+Resources:
+  Bootstrap:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-2:101802775469:applications/panther-bootstrap
+        SemanticVersion: 0.1.2
+
+  BootstrapGateway:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-2:101802775469:applications/panther-bootstrap-gateway
+        SemanticVersion: 0.1.1
+
+  Core:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-2:101802775469:applications/panther-core
+        SemanticVersion: 0.1.0
+      Parameters:
+        AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
+        AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
+        AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
+        ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
+        OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
+        UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId

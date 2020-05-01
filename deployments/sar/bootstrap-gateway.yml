@@ -1,0 +1,2682 @@
+# Changes:
+# - This is obviously the embedded template
+# - Python layer content is specified as zip file, sam package will upload it
+# - Add metadata section
+# - Removed layer parameters for simplicity
+# - Removed Python layer completely (54.4 MB exceeds 52.4 MB limit) - we might be able to make it fit with some tuning
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: panther-bootstrap-gateway
+    Author: Panther Labs
+    Description: API gateway
+    HomePageUrl: https://runpanther.io
+    SemanticVersion: 0.1.1
+    SourceCodeUrl: https://github.com/panther-labs/panther
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: API gateway
+Outputs:
+  AnalysisApiEndpoint:
+    Description: HTTPS endpoint for the analysis api
+    Value:
+      Fn::Sub: ${AnalysisApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+  AnalysisApiId:
+    Description: Analysis API Gateway ID
+    Value:
+      Ref: AnalysisApi
+  ComplianceApiEndpoint:
+    Description: HTTPS endpoint for the compliance api
+    Value:
+      Fn::Sub: ${ComplianceApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+  ComplianceApiId:
+    Description: Compliance API Gateway ID
+    Value:
+      Ref: ComplianceApi
+  RemediationApiEndpoint:
+    Description: HTTPS endpoint for the remediation api
+    Value:
+      Fn::Sub: ${RemediationApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+  RemediationApiId:
+    Description: Remediation API Gateway ID
+    Value:
+      Ref: RemediationApi
+  ResourcesApiEndpoint:
+    Description: HTTPS endpoint for the resources api
+    Value:
+      Fn::Sub: ${ResourcesApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+  ResourcesApiId:
+    Description: Resources API Gateway ID
+    Value:
+      Ref: ResourcesApi
+Parameters:
+  TracingEnabled:
+    AllowedValues:
+      - true
+      - false
+    Default: false
+    Description: Enable XRay tracing on API Gateway
+    Type: String
+Resources:
+  AnalysisApi:
+    Properties:
+      DefinitionBody:
+        consumes:
+          - application/json
+        definitions:
+          AnalysisType:
+            enum:
+              - GLOBAL
+              - POLICY
+              - RULE
+            type: string
+          BulkUpload:
+            properties:
+              data:
+                $ref: '#/definitions/base64zipfile'
+              userId:
+                $ref: '#/definitions/userId'
+            required:
+              - data
+              - userId
+            type: object
+          BulkUploadResult:
+            properties:
+              modifiedGlobals:
+                minimum: 0
+                type: integer
+              modifiedPolicies:
+                minimum: 0
+                type: integer
+              modifiedRules:
+                minimum: 0
+                type: integer
+              newGlobals:
+                minimum: 0
+                type: integer
+              newPolicies:
+                minimum: 0
+                type: integer
+              newRules:
+                minimum: 0
+                type: integer
+              totalGlobals:
+                minimum: 0
+                type: integer
+              totalPolicies:
+                minimum: 0
+                type: integer
+              totalRules:
+                minimum: 0
+                type: integer
+            required:
+              - totalPolicies
+              - newPolicies
+              - modifiedPolicies
+              - totalRules
+              - newRules
+              - modifiedRules
+              - totalGlobals
+              - newGlobals
+              - modifiedGlobals
+            type: object
+          DeleteEntry:
+            properties:
+              id:
+                $ref: '#/definitions/id'
+            required:
+              - id
+            type: object
+          DeletePolicies:
+            properties:
+              policies:
+                items:
+                  $ref: '#/definitions/DeleteEntry'
+                maxItems: 1000
+                minItems: 1
+                type: array
+                uniqueItems: true
+            required:
+              - policies
+            type: object
+          EnabledPolicies:
+            properties:
+              policies:
+                items:
+                  $ref: '#/definitions/EnabledPolicy'
+                type: array
+            required:
+              - policies
+            type: object
+          EnabledPolicy:
+            properties:
+              body:
+                $ref: '#/definitions/body'
+              dedupPeriodMinutes:
+                $ref: '#/definitions/dedupPeriodMinutes'
+              id:
+                $ref: '#/definitions/id'
+              resourceTypes:
+                $ref: '#/definitions/TypeSet'
+              severity:
+                $ref: '#/definitions/severity'
+              suppressions:
+                $ref: '#/definitions/suppressions'
+              versionId:
+                $ref: '#/definitions/versionId'
+            type: object
+          Error:
+            properties:
+              message:
+                description: Error message
+                type: string
+            required:
+              - message
+            type: object
+          Global:
+            properties:
+              body:
+                $ref: '#/definitions/body'
+              createdAt:
+                $ref: '#/definitions/modifyTime'
+              createdBy:
+                $ref: '#/definitions/userId'
+              description:
+                $ref: '#/definitions/description'
+              id:
+                $ref: '#/definitions/id'
+              lastModified:
+                $ref: '#/definitions/modifyTime'
+              lastModifiedBy:
+                $ref: '#/definitions/userId'
+              tags:
+                $ref: '#/definitions/tags'
+              versionId:
+                $ref: '#/definitions/versionId'
+            required:
+              - body
+              - createdAt
+              - createdBy
+              - description
+              - id
+              - lastModified
+              - lastModifiedBy
+              - tags
+              - versionId
+            type: object
+          Paging:
+            properties:
+              thisPage:
+                minimum: 1
+                type: integer
+              totalItems:
+                minimum: 1
+                type: integer
+              totalPages:
+                minimum: 1
+                type: integer
+            required:
+              - thisPage
+              - totalPages
+              - totalItems
+            type: object
+          Policy:
+            properties:
+              autoRemediationId:
+                $ref: '#/definitions/autoRemediationId'
+              autoRemediationParameters:
+                $ref: '#/definitions/autoRemediationParameters'
+              body:
+                $ref: '#/definitions/body'
+              complianceStatus:
+                $ref: '#/definitions/complianceStatus'
+              createdAt:
+                $ref: '#/definitions/modifyTime'
+              createdBy:
+                $ref: '#/definitions/userId'
+              description:
+                $ref: '#/definitions/description'
+              displayName:
+                $ref: '#/definitions/displayName'
+              enabled:
+                $ref: '#/definitions/enabled'
+              id:
+                $ref: '#/definitions/id'
+              lastModified:
+                $ref: '#/definitions/modifyTime'
+              lastModifiedBy:
+                $ref: '#/definitions/userId'
+              reference:
+                $ref: '#/definitions/reference'
+              resourceTypes:
+                $ref: '#/definitions/TypeSet'
+              runbook:
+                $ref: '#/definitions/runbook'
+              severity:
+                $ref: '#/definitions/severity'
+              suppressions:
+                $ref: '#/definitions/suppressions'
+              tags:
+                $ref: '#/definitions/tags'
+              tests:
+                $ref: '#/definitions/TestSuite'
+              versionId:
+                $ref: '#/definitions/versionId'
+            required:
+              - autoRemediationId
+              - autoRemediationParameters
+              - body
+              - complianceStatus
+              - createdAt
+              - createdBy
+              - description
+              - displayName
+              - enabled
+              - id
+              - lastModified
+              - lastModifiedBy
+              - reference
+              - resourceTypes
+              - runbook
+              - severity
+              - suppressions
+              - tags
+              - tests
+              - versionId
+            type: object
+          PolicyList:
+            properties:
+              paging:
+                $ref: '#/definitions/Paging'
+              policies:
+                items:
+                  $ref: '#/definitions/PolicySummary'
+                type: array
+            required:
+              - paging
+              - policies
+            type: object
+          PolicySummary:
+            properties:
+              autoRemediationId:
+                $ref: '#/definitions/autoRemediationId'
+              autoRemediationParameters:
+                $ref: '#/definitions/autoRemediationParameters'
+              complianceStatus:
+                $ref: '#/definitions/complianceStatus'
+              displayName:
+                $ref: '#/definitions/displayName'
+              enabled:
+                $ref: '#/definitions/enabled'
+              id:
+                $ref: '#/definitions/id'
+              lastModified:
+                $ref: '#/definitions/modifyTime'
+              resourceTypes:
+                $ref: '#/definitions/TypeSet'
+              severity:
+                $ref: '#/definitions/severity'
+              suppressions:
+                $ref: '#/definitions/suppressions'
+              tags:
+                $ref: '#/definitions/tags'
+            required:
+              - autoRemediationId
+              - autoRemediationParameters
+              - complianceStatus
+              - displayName
+              - enabled
+              - id
+              - lastModified
+              - resourceTypes
+              - severity
+              - tags
+              - suppressions
+            type: object
+          Rule:
+            properties:
+              body:
+                $ref: '#/definitions/body'
+              createdAt:
+                $ref: '#/definitions/modifyTime'
+              createdBy:
+                $ref: '#/definitions/userId'
+              dedupPeriodMinutes:
+                $ref: '#/definitions/dedupPeriodMinutes'
+              description:
+                $ref: '#/definitions/description'
+              displayName:
+                $ref: '#/definitions/displayName'
+              enabled:
+                $ref: '#/definitions/enabled'
+              id:
+                $ref: '#/definitions/id'
+              lastModified:
+                $ref: '#/definitions/modifyTime'
+              lastModifiedBy:
+                $ref: '#/definitions/userId'
+              logTypes:
+                $ref: '#/definitions/TypeSet'
+              reference:
+                $ref: '#/definitions/reference'
+              runbook:
+                $ref: '#/definitions/runbook'
+              severity:
+                $ref: '#/definitions/severity'
+              tags:
+                $ref: '#/definitions/tags'
+              tests:
+                $ref: '#/definitions/TestSuite'
+              versionId:
+                $ref: '#/definitions/versionId'
+            required:
+              - body
+              - createdAt
+              - createdBy
+              - description
+              - displayName
+              - enabled
+              - id
+              - lastModified
+              - lastModifiedBy
+              - logTypes
+              - reference
+              - runbook
+              - severity
+              - tags
+              - tests
+              - versionId
+              - dedupPeriodMinutes
+            type: object
+          RuleList:
+            properties:
+              paging:
+                $ref: '#/definitions/Paging'
+              rules:
+                items:
+                  $ref: '#/definitions/RuleSummary'
+                type: array
+            required:
+              - paging
+              - rules
+            type: object
+          RuleSummary:
+            properties:
+              displayName:
+                $ref: '#/definitions/displayName'
+              enabled:
+                $ref: '#/definitions/enabled'
+              id:
+                $ref: '#/definitions/id'
+              lastModified:
+                $ref: '#/definitions/modifyTime'
+              logTypes:
+                $ref: '#/definitions/TypeSet'
+              severity:
+                $ref: '#/definitions/severity'
+              tags:
+                $ref: '#/definitions/tags'
+            required:
+              - displayName
+              - enabled
+              - id
+              - lastModified
+              - logTypes
+              - severity
+              - tags
+            type: object
+          Suppress:
+            properties:
+              policyIds:
+                items:
+                  $ref: '#/definitions/id'
+                minItems: 1
+                type: array
+              resourcePatterns:
+                $ref: '#/definitions/suppressions'
+            required:
+              - policyIds
+              - resourcePatterns
+            type: object
+          TestPolicy:
+            properties:
+              analysisType:
+                $ref: '#/definitions/AnalysisType'
+              body:
+                $ref: '#/definitions/body'
+              resourceTypes:
+                $ref: '#/definitions/TypeSet'
+              tests:
+                $ref: '#/definitions/TestSuite'
+            required:
+              - body
+              - resourceTypes
+              - tests
+              - analysisType
+            type: object
+          TestPolicyResult:
+            properties:
+              testSummary:
+                $ref: '#/definitions/testSummary'
+              testsErrored:
+                $ref: '#/definitions/testsErrored'
+              testsFailed:
+                $ref: '#/definitions/testsFailed'
+              testsPassed:
+                $ref: '#/definitions/testsPassed'
+            required:
+              - testSummary
+              - testsPassed
+              - testsFailed
+              - testsErrored
+            type: object
+          TestSuite:
+            items:
+              $ref: '#/definitions/UnitTest'
+            type: array
+          TypeSet:
+            description: List of resource/log types to which this policy applies
+            items:
+              minLength: 1
+              type: string
+            maxItems: 500
+            type: array
+            uniqueItems: true
+          UnitTest:
+            properties:
+              expectedResult:
+                $ref: '#/definitions/testExpectedResult'
+              name:
+                $ref: '#/definitions/testName'
+              resource:
+                $ref: '#/definitions/testResource'
+              resourceType:
+                $ref: '#/definitions/testResourceType'
+            required:
+              - expectedResult
+              - name
+              - resource
+              - resourceType
+            type: object
+          UpdateGlobal:
+            properties:
+              body:
+                $ref: '#/definitions/body'
+              description:
+                $ref: '#/definitions/description'
+              id:
+                $ref: '#/definitions/id'
+              tags:
+                $ref: '#/definitions/tags'
+              userId:
+                $ref: '#/definitions/userId'
+            required:
+              - body
+              - id
+              - userId
+            type: object
+          UpdatePolicy:
+            properties:
+              autoRemediationId:
+                $ref: '#/definitions/autoRemediationId'
+              autoRemediationParameters:
+                $ref: '#/definitions/autoRemediationParameters'
+              body:
+                $ref: '#/definitions/body'
+              description:
+                $ref: '#/definitions/description'
+              displayName:
+                $ref: '#/definitions/displayName'
+              enabled:
+                $ref: '#/definitions/enabled'
+              id:
+                $ref: '#/definitions/id'
+              reference:
+                $ref: '#/definitions/reference'
+              resourceTypes:
+                $ref: '#/definitions/TypeSet'
+              runbook:
+                $ref: '#/definitions/runbook'
+              severity:
+                $ref: '#/definitions/severity'
+              suppressions:
+                $ref: '#/definitions/suppressions'
+              tags:
+                $ref: '#/definitions/tags'
+              tests:
+                $ref: '#/definitions/TestSuite'
+              userId:
+                $ref: '#/definitions/userId'
+            required:
+              - body
+              - enabled
+              - id
+              - severity
+              - userId
+            type: object
+          UpdateRule:
+            properties:
+              body:
+                $ref: '#/definitions/body'
+              dedupPeriodMinutes:
+                $ref: '#/definitions/dedupPeriodMinutes'
+              description:
+                $ref: '#/definitions/description'
+              displayName:
+                $ref: '#/definitions/displayName'
+              enabled:
+                $ref: '#/definitions/enabled'
+              id:
+                $ref: '#/definitions/id'
+              logTypes:
+                $ref: '#/definitions/TypeSet'
+              reference:
+                $ref: '#/definitions/reference'
+              runbook:
+                $ref: '#/definitions/runbook'
+              severity:
+                $ref: '#/definitions/severity'
+              tags:
+                $ref: '#/definitions/tags'
+              tests:
+                $ref: '#/definitions/TestSuite'
+              userId:
+                $ref: '#/definitions/userId'
+            required:
+              - body
+              - enabled
+              - id
+              - severity
+              - userId
+            type: object
+          autoRemediationId:
+            description: When a resource fails the policy, trigger the remediation
+              with this ID
+            maxLength: 200
+            type: string
+          autoRemediationParameters:
+            additionalProperties:
+              type: string
+            description: Configuration parameters passed to the remediation handler
+            maxProperties: 50
+            type: object
+          base64zipfile:
+            description: Base64-encoded zipfile with a policy bundle
+            minLength: 10
+            type: string
+          body:
+            description: Python policy source code
+            maxLength: 1000000
+            minLength: 10
+            type: string
+          complianceStatus:
+            description: Pass/fail compliance status
+            enum:
+              - ERROR
+              - FAIL
+              - PASS
+            type: string
+          dedupPeriodMinutes:
+            default: 60
+            description: The time in minutes for which we deduplicate events when
+              generating alerts for log analysis
+            maximum: 1440
+            minimum: 15
+            type: integer
+          description:
+            description: Summary of the policy and its purpose
+            maxLength: 5000
+            type: string
+          displayName:
+            description: Optional user-friendly policy name
+            maxLength: 200
+            type: string
+          enabled:
+            description: True if the policy is currently being evaluated
+            type: boolean
+          id:
+            description: User-specified unique rule/policy ID
+            pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+            type: string
+          modifyTime:
+            description: Policy modification timestamp
+            format: date-time
+            type: string
+          reference:
+            description: External documentation motivating the need for this policy
+            maxLength: 5000
+            type: string
+          runbook:
+            description: Internal documenation about what to do when a policy fails
+            type: string
+          severity:
+            description: Policy severity
+            enum:
+              - INFO
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+            type: string
+          suppressions:
+            description: |
+              List of resource ID regexes that are excepted from this policy. The policy will still be evaluated, but failures will not trigger alerts nor remediations.
+            items:
+              maxLength: 1000
+              type: string
+            maxItems: 500
+            type: array
+            uniqueItems: true
+          tags:
+            description: List of tags to categorize the policy
+            items:
+              maxLength: 200
+              type: string
+            maxItems: 500
+            type: array
+            uniqueItems: true
+          testErrorResult:
+            description: A combination of a test name and the error the test raised
+            properties:
+              errorMessage:
+                type: string
+              name:
+                type: string
+            type: object
+          testExpectedResult:
+            description: The expected outcome when running a unit test
+            type: boolean
+          testName:
+            description: The name of a unit test
+            minLength: 1
+            type: string
+          testResource:
+            description: The resource (or log event) the unit test is running against
+            minLength: 2
+            type: string
+          testResourceType:
+            description: The resource or log type of an individual unit test
+            minLength: 1
+            type: string
+          testSummary:
+            description: True if all tests passed
+            type: boolean
+          testsErrored:
+            description: List of names of tests that raised an error, along with their
+              error message
+            items:
+              $ref: '#/definitions/testErrorResult'
+            type: array
+          testsFailed:
+            description: List of names of tests that failed
+            items:
+              type: string
+            type: array
+          testsPassed:
+            description: List of names of tests that passed
+            items:
+              type: string
+            type: array
+          userId:
+            description: Panther user ID that created or modified the policy
+            pattern: '[a-f0-9\-]{36}'
+            type: string
+          versionId:
+            description: Policy version ID
+            pattern: '[a-zA-Z\._0-9]{32}'
+            type: string
+        info:
+          contact:
+            email: support@runpanther.io
+            name: Panther Labs
+            url: https://runpanther.io/about
+          description: Panther Python policies/rules
+          title: panther-analysis-api
+          version: 1.0.0
+        parameters:
+          globalId:
+            description: Unique ASCII global identifier
+            in: query
+            name: globalId
+            pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+            required: true
+            type: string
+          policyId:
+            description: Unique ASCII policy identifier
+            in: query
+            name: policyId
+            pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+            required: true
+            type: string
+          ruleId:
+            description: Unique ASCII rule identifier
+            in: query
+            name: ruleId
+            pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+            required: true
+            type: string
+          type:
+            description: Type of analysis logic to retrieve
+            enum:
+              - POLICY
+              - RULE
+              - GLOBAL
+            in: query
+            name: type
+            required: true
+            type: string
+          versionId:
+            description: The version of the analysis to retrieve
+            in: query
+            name: versionId
+            pattern: '[a-zA-Z\._0-9]{32}'
+            type: string
+        paths:
+          /delete:
+            post:
+              operationId: DeletePolicies
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/DeletePolicies'
+              responses:
+                '200':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Delete one or more policies/rules
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /enabled:
+            get:
+              operationId: GetEnabledPolicies
+              parameters:
+                - $ref: '#/parameters/type'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/EnabledPolicies'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: List all enabled rules/policies for a customer account for
+                backend processing
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /global:
+            get:
+              operationId: GetGlobal
+              parameters:
+                - $ref: '#/parameters/globalId'
+                - $ref: '#/parameters/versionId'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/Global'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '404':
+                  description: Global does not exist
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Get global details
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+            post:
+              operationId: CreateGlobal
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/UpdateGlobal'
+              responses:
+                '201':
+                  description: Global created successfully
+                  schema:
+                    $ref: '#/definitions/Global'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '409':
+                  description: Global with the given ID already exists
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Create a new global module
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /global/delete:
+            post:
+              operationId: DeleteGlobals
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/DeletePolicies'
+              responses:
+                '200':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Delete one or more globals
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /global/update:
+            post:
+              operationId: ModifyGlobal
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/UpdateGlobal'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/Global'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '404':
+                  description: Global not found
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Modify an existing global
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /list:
+            get:
+              operationId: ListPolicies
+              parameters:
+                - description: Only include policies with a specific compliance status
+                  enum:
+                    - ERROR
+                    - FAIL
+                    - PASS
+                  in: query
+                  name: complianceStatus
+                  type: string
+                - description: Only include policies whose ID or display name contains
+                    this substring (case-insensitive)
+                  in: query
+                  name: nameContains
+                  type: string
+                - description: Only include policies which are enabled or disabled
+                  in: query
+                  name: enabled
+                  type: boolean
+                - description: Only include policies with or without auto-remediation
+                    enabled
+                  in: query
+                  name: hasRemediation
+                  type: boolean
+                - collectionFormat: csv
+                  description: Only include policies which apply to one of these resource
+                    types
+                  in: query
+                  items:
+                    type: string
+                  name: resourceTypes
+                  type: array
+                  uniqueItems: true
+                - description: Only include policies with this severity
+                  enum:
+                    - INFO
+                    - LOW
+                    - MEDIUM
+                    - HIGH
+                    - CRITICAL
+                  in: query
+                  name: severity
+                  type: string
+                - collectionFormat: csv
+                  description: Only include policies with all of these tags (case-insensitive)
+                  in: query
+                  items:
+                    type: string
+                  name: tags
+                  type: array
+                  uniqueItems: true
+                - default: severity
+                  description: Name of the field to sort by
+                  enum:
+                    - complianceStatus
+                    - enabled
+                    - id
+                    - lastModified
+                    - resourceTypes
+                    - severity
+                  in: query
+                  name: sortBy
+                  type: string
+                - default: descending
+                  description: Sort direction
+                  enum:
+                    - ascending
+                    - descending
+                  in: query
+                  name: sortDir
+                  type: string
+                - default: 25
+                  description: Number of items in each page of results
+                  in: query
+                  maximum: 1000
+                  minimum: 1
+                  name: pageSize
+                  type: integer
+                - default: 1
+                  description: Which page of results to retrieve
+                  in: query
+                  minimum: 1
+                  name: page
+                  type: integer
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/PolicyList'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Page through policies in a customer's account
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /policy:
+            get:
+              operationId: GetPolicy
+              parameters:
+                - $ref: '#/parameters/policyId'
+                - $ref: '#/parameters/versionId'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/Policy'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '404':
+                  description: Policy does not exist
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Get policy details
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+            post:
+              operationId: CreatePolicy
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/UpdatePolicy'
+              responses:
+                '201':
+                  description: Policy created successfully
+                  schema:
+                    $ref: '#/definitions/Policy'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '409':
+                  description: Rule or policy with the given ID already exists
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Create a new compliance policy
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /rule:
+            get:
+              operationId: GetRule
+              parameters:
+                - $ref: '#/parameters/ruleId'
+                - $ref: '#/parameters/versionId'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/Rule'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '404':
+                  description: Rule does not exist
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Get rule details
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+            post:
+              operationId: CreateRule
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/UpdateRule'
+              responses:
+                '201':
+                  description: Rule created successfully
+                  schema:
+                    $ref: '#/definitions/Rule'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '409':
+                  description: Rule or policy with the given ID already exists
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Create a new log analysis rule
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /rule/list:
+            get:
+              operationId: ListRules
+              parameters:
+                - description: Only include rules whose ID or display name contains
+                    this substring (case-insensitive)
+                  in: query
+                  name: nameContains
+                  type: string
+                - description: Only include rules which are enabled or disabled
+                  in: query
+                  name: enabled
+                  type: boolean
+                - collectionFormat: csv
+                  description: Only include rules which apply to one of these log types
+                  in: query
+                  items:
+                    type: string
+                  name: logTypes
+                  type: array
+                  uniqueItems: true
+                - description: Only include policies with this severity
+                  enum:
+                    - INFO
+                    - LOW
+                    - MEDIUM
+                    - HIGH
+                    - CRITICAL
+                  in: query
+                  name: severity
+                  type: string
+                - collectionFormat: csv
+                  description: Only include policies with all of these tags (case-insensitive)
+                  in: query
+                  items:
+                    type: string
+                  name: tags
+                  type: array
+                  uniqueItems: true
+                - default: severity
+                  description: Name of the field to sort by
+                  enum:
+                    - enabled
+                    - id
+                    - lastModified
+                    - logTypes
+                    - severity
+                  in: query
+                  name: sortBy
+                  type: string
+                - default: ascending
+                  description: Sort direction
+                  enum:
+                    - ascending
+                    - descending
+                  in: query
+                  name: sortDir
+                  type: string
+                - default: 25
+                  description: Number of items in each page of results
+                  in: query
+                  maximum: 1000
+                  minimum: 1
+                  name: pageSize
+                  type: integer
+                - default: 1
+                  description: Which page of results to retrieve
+                  in: query
+                  minimum: 1
+                  name: page
+                  type: integer
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/RuleList'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Page through rules in a customer's account
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /rule/update:
+            post:
+              operationId: ModifyRule
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/UpdateRule'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/Rule'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '404':
+                  description: Rule not found
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Modify an existing rule
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /suppress:
+            post:
+              operationId: Suppress
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/Suppress'
+              responses:
+                '200':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Suppress resource patterns across one or more policies
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /test:
+            post:
+              operationId: TestPolicy
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/TestPolicy'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/TestPolicyResult'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Test a policy against a set of unit tests
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /update:
+            post:
+              operationId: ModifyPolicy
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/UpdatePolicy'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/Policy'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '404':
+                  description: Policy not found
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Modify an existing policy
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /upload:
+            post:
+              operationId: BulkUpload
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/BulkUpload'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/BulkUploadResult'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Upload a zipfile containing a bundle of policies
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+        produces:
+          - application/json
+        schemes:
+          - https
+        securityDefinitions:
+          sigv4:
+            in: header
+            name: Authorization
+            type: apiKey
+            x-amazon-apigateway-authtype: awsSigv4
+        swagger: '2.0'
+        x-amazon-apigateway-request-validators:
+          validate-all:
+            validateRequestBody: true
+            validateRequestParameters: true
+      EndpointConfiguration: REGIONAL
+      Name: panther-analysis-api
+      StageName: v1
+      TracingEnabled:
+        Ref: TracingEnabled
+    Type: AWS::Serverless::Api
+  ComplianceApi:
+    Properties:
+      DefinitionBody:
+        consumes:
+          - application/json
+        definitions:
+          ActiveSuppressCount:
+            properties:
+              active:
+                $ref: '#/definitions/StatusCount'
+              suppressed:
+                $ref: '#/definitions/StatusCount'
+            required:
+              - active
+              - suppressed
+            type: object
+          ComplianceStatus:
+            properties:
+              errorMessage:
+                $ref: '#/definitions/errorMessage'
+              expiresAt:
+                $ref: '#/definitions/expiresAt'
+              integrationId:
+                $ref: '#/definitions/integrationId'
+              lastUpdated:
+                $ref: '#/definitions/lastUpdated'
+              policyId:
+                $ref: '#/definitions/policyId'
+              policySeverity:
+                $ref: '#/definitions/policySeverity'
+              resourceId:
+                $ref: '#/definitions/resourceId'
+              resourceType:
+                $ref: '#/definitions/resourceType'
+              status:
+                $ref: '#/definitions/status'
+              suppressed:
+                $ref: '#/definitions/suppressed'
+            required:
+              - expiresAt
+              - integrationId
+              - lastUpdated
+              - policyId
+              - policySeverity
+              - resourceId
+              - resourceType
+              - status
+              - suppressed
+            type: object
+          DeletePolicy:
+            properties:
+              id:
+                $ref: '#/definitions/policyId'
+              resourceTypes:
+                description: Only delete entries with these specific resource types
+                items:
+                  type: string
+                type: array
+            required:
+              - id
+          DeleteResource:
+            properties:
+              id:
+                $ref: '#/definitions/resourceId'
+            required:
+              - id
+          DeleteStatus:
+            properties:
+              policy:
+                $ref: '#/definitions/DeletePolicy'
+              resource:
+                $ref: '#/definitions/DeleteResource'
+          DeleteStatusBatch:
+            properties:
+              entries:
+                items:
+                  $ref: '#/definitions/DeleteStatus'
+                minItems: 1
+                type: array
+            required:
+              - entries
+            type: object
+          EntireOrg:
+            properties:
+              policies:
+                items:
+                  $ref: '#/definitions/ItemSummary'
+                type: array
+              resources:
+                items:
+                  $ref: '#/definitions/ItemSummary'
+                type: array
+            required:
+              - policies
+              - resources
+            type: object
+          Error:
+            properties:
+              message:
+                description: Error message
+                type: string
+            required:
+              - message
+            type: object
+          IgnoreSet:
+            description: Resource glob patterns which should be suppressed
+            items:
+              type: string
+            type: array
+          ItemSummary:
+            description: Summary of a single policy or resource compliance status
+            properties:
+              id:
+                type: string
+              status:
+                $ref: '#/definitions/status'
+            required:
+              - id
+              - status
+            type: object
+          OrgSummary:
+            properties:
+              appliedPolicies:
+                $ref: '#/definitions/StatusCountBySeverity'
+              scannedResources:
+                $ref: '#/definitions/ScannedResources'
+              topFailingPolicies:
+                items:
+                  $ref: '#/definitions/PolicySummary'
+                type: array
+              topFailingResources:
+                items:
+                  $ref: '#/definitions/ResourceSummary'
+                type: array
+            required:
+              - appliedPolicies
+              - scannedResources
+              - topFailingPolicies
+              - topFailingResources
+            type: object
+          Paging:
+            properties:
+              thisPage:
+                minimum: 1
+                type: integer
+              totalItems:
+                minimum: 1
+                type: integer
+              totalPages:
+                minimum: 1
+                type: integer
+            required:
+              - thisPage
+              - totalPages
+              - totalItems
+            type: object
+          PolicyResourceDetail:
+            properties:
+              items:
+                items:
+                  $ref: '#/definitions/ComplianceStatus'
+                type: array
+              paging:
+                $ref: '#/definitions/Paging'
+              status:
+                $ref: '#/definitions/status'
+              totals:
+                $ref: '#/definitions/ActiveSuppressCount'
+            required:
+              - items
+              - paging
+              - status
+              - totals
+            type: object
+          PolicySummary:
+            description: Summary of a single policy compliance status
+            properties:
+              count:
+                $ref: '#/definitions/StatusCount'
+              id:
+                $ref: '#/definitions/policyId'
+              severity:
+                $ref: '#/definitions/policySeverity'
+            required:
+              - count
+              - id
+              - severity
+            type: object
+          ResourceOfType:
+            properties:
+              count:
+                $ref: '#/definitions/StatusCount'
+              type:
+                $ref: '#/definitions/resourceType'
+            required:
+              - count
+              - type
+            type: object
+          ResourceSummary:
+            description: Summary of a single resource compliance status
+            properties:
+              count:
+                $ref: '#/definitions/StatusCountBySeverity'
+              id:
+                $ref: '#/definitions/resourceId'
+              type:
+                $ref: '#/definitions/resourceType'
+            required:
+              - count
+              - id
+              - type
+            type: object
+          ScannedResources:
+            properties:
+              byType:
+                items:
+                  $ref: '#/definitions/ResourceOfType'
+                type: array
+            required:
+              - byType
+            type: object
+          SetStatus:
+            properties:
+              errorMessage:
+                $ref: '#/definitions/errorMessage'
+              integrationId:
+                $ref: '#/definitions/integrationId'
+              policyId:
+                $ref: '#/definitions/policyId'
+              policySeverity:
+                $ref: '#/definitions/policySeverity'
+              resourceId:
+                $ref: '#/definitions/resourceId'
+              resourceType:
+                $ref: '#/definitions/resourceType'
+              status:
+                $ref: '#/definitions/status'
+              suppressed:
+                $ref: '#/definitions/suppressed'
+            required:
+              - policyId
+              - policySeverity
+              - resourceId
+              - resourceType
+              - status
+              - suppressed
+              - integrationId
+          SetStatusBatch:
+            properties:
+              entries:
+                items:
+                  $ref: '#/definitions/SetStatus'
+                minItems: 1
+                type: array
+            required:
+              - entries
+            type: object
+          StatusCount:
+            properties:
+              error:
+                minimum: 0
+                type: integer
+              fail:
+                minimum: 0
+                type: integer
+              pass:
+                minimum: 0
+                type: integer
+            type: object
+          StatusCountBySeverity:
+            properties:
+              critical:
+                $ref: '#/definitions/StatusCount'
+              high:
+                $ref: '#/definitions/StatusCount'
+              info:
+                $ref: '#/definitions/StatusCount'
+              low:
+                $ref: '#/definitions/StatusCount'
+              medium:
+                $ref: '#/definitions/StatusCount'
+            type: object
+          UpdateMetadata:
+            properties:
+              policyId:
+                $ref: '#/definitions/policyId'
+              severity:
+                $ref: '#/definitions/policySeverity'
+              suppressions:
+                $ref: '#/definitions/IgnoreSet'
+            required:
+              - policyId
+              - severity
+            type: object
+          errorMessage:
+            description: Error message when policy was applied to this resource
+            type: string
+          expiresAt:
+            description: Dynamo TTL - unix time when the status will be automatically
+              cleared
+            format: int64
+            type: number
+          integrationId:
+            description: IntegrationID where the resource was discovered
+            pattern: '[a-f0-9\-]{36}'
+            type: string
+          lastUpdated:
+            description: When the compliance state was last updated in the Panther
+              database
+            format: date-time
+            type: string
+          policyId:
+            description: Panther policy ID, unique within each customer's account
+            maxLength: 200
+            type: string
+          policySeverity:
+            description: Policy severity
+            enum:
+              - INFO
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+            type: string
+          resourceId:
+            description: Globally unique resource ID
+            maxLength: 2000
+            type: string
+          resourceType:
+            description: Resource type
+            maxLength: 200
+            type: string
+          status:
+            description: |
+              Compliance status for one or more policy/resource pairs. A list has the collective status ERROR or FAIL if any of them individually error or fail.
+            enum:
+              - ERROR
+              - FAIL
+              - PASS
+            type: string
+          suppressed:
+            description: |
+              True if this resource is ignored/suppressed by this specific policy. Suppressed resources are still analyzed and reported, but do not trigger alerts/remediations.
+            type: boolean
+        info:
+          contact:
+            email: support@runpanther.io
+            name: Panther Labs
+            url: https://runpanther.io/about
+          description: Track pass/fail state for every policy-resource pair
+          title: panther-compliance-api
+          version: 1.0.0
+        parameters:
+          page:
+            default: 1
+            description: Which page of results to retrieve
+            in: query
+            minimum: 1
+            name: page
+            type: integer
+          pageSize:
+            default: 25
+            description: Number of items in each page of results
+            in: query
+            maximum: 1000
+            minimum: 0
+            name: pageSize
+            type: integer
+          policyId:
+            description: URL-encoded panther policy ID
+            in: query
+            maxLength: 200
+            name: policyId
+            required: true
+            type: string
+          resourceId:
+            description: URL-encoded unique resource ID
+            in: query
+            maxLength: 2000
+            name: resourceId
+            required: true
+            type: string
+          severity:
+            description: Limit entries to those whose policies have this severity
+            enum:
+              - LOW
+              - INFO
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+            in: query
+            name: severity
+            type: string
+          status:
+            description: Limit entries to those with a specific compliance status
+            enum:
+              - ERROR
+              - FAIL
+              - PASS
+            in: query
+            name: status
+            type: string
+          suppressed:
+            description: Limit entries to those which are/are not suppressed
+            in: query
+            name: suppressed
+            type: boolean
+        paths:
+          /delete:
+            post:
+              operationId: DeleteStatus
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/DeleteStatusBatch'
+              responses:
+                '200':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Delete the status associated with one or more policies or resources
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /describe-org:
+            get:
+              operationId: DescribeOrg
+              parameters:
+                - description: Which type of information is returned
+                  enum:
+                    - policy
+                    - resource
+                  in: query
+                  name: type
+                  required: true
+                  type: string
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/EntireOrg'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: List pass/fail status for every policy and resource in the
+                org
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /describe-policy:
+            get:
+              operationId: DescribePolicy
+              parameters:
+                - $ref: '#/parameters/policyId'
+                - $ref: '#/parameters/page'
+                - $ref: '#/parameters/pageSize'
+                - $ref: '#/parameters/status'
+                - $ref: '#/parameters/suppressed'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/PolicyResourceDetail'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Page through resources affected by a specific policy
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /describe-resource:
+            get:
+              operationId: DescribeResource
+              parameters:
+                - $ref: '#/parameters/resourceId'
+                - $ref: '#/parameters/page'
+                - $ref: '#/parameters/pageSize'
+                - $ref: '#/parameters/severity'
+                - $ref: '#/parameters/status'
+                - $ref: '#/parameters/suppressed'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/PolicyResourceDetail'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Page through policies which affect this resource
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /org-overview:
+            get:
+              operationId: GetOrgOverview
+              parameters:
+                - default: 10
+                  description: Upper bound on the number of top failing resources and
+                    policies returned
+                  in: query
+                  maximum: 500
+                  minimum: 1
+                  name: limitTopFailing
+                  type: integer
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/OrgSummary'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Get account totals and top failing policies / resources
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /status:
+            get:
+              operationId: GetStatus
+              parameters:
+                - $ref: '#/parameters/resourceId'
+                - $ref: '#/parameters/policyId'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/ComplianceStatus'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '404':
+                  description: policy-resource pair not found
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Get compliance status for a single policy/resource pair
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+            post:
+              operationId: SetStatus
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/SetStatusBatch'
+              responses:
+                '201':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Set the compliance status for a batch of resource/policy pairs
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /update:
+            post:
+              operationId: UpdateMetadata
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/UpdateMetadata'
+              responses:
+                '200':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Update
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+        produces:
+          - application/json
+        schemes:
+          - https
+        securityDefinitions:
+          sigv4:
+            in: header
+            name: Authorization
+            type: apiKey
+            x-amazon-apigateway-authtype: awsSigv4
+        swagger: '2.0'
+        x-amazon-apigateway-request-validators:
+          validate-all:
+            validateRequestBody: true
+            validateRequestParameters: true
+      EndpointConfiguration: REGIONAL
+      Name: panther-compliance-api
+      StageName: v1
+      TracingEnabled:
+        Ref: TracingEnabled
+    Type: AWS::Serverless::Api
+  RemediationApi:
+    Properties:
+      DefinitionBody:
+        consumes:
+          - application/json
+        definitions:
+          Error:
+            properties:
+              message:
+                description: Error message
+                type: string
+            required:
+              - message
+            type: object
+          PolicyId:
+            description: A unique policy ID
+            maxLength: 200
+            minLength: 1
+            type: string
+          RemediateResource:
+            properties:
+              policyId:
+                $ref: '#/definitions/PolicyId'
+              resourceId:
+                $ref: '#/definitions/ResourceId'
+            required:
+              - policyId
+              - resourceId
+            type: object
+          Remediations:
+            additionalProperties:
+              type: object
+            type: object
+          ResourceId:
+            description: Unique resource identifier
+            maxLength: 5000
+            minLength: 1
+            type: string
+        info:
+          contact:
+            email: support@runpanther.io
+            name: Panther Labs
+            url: https://runpanther.io/about
+          description: API to invoke remediations
+          title: panther-remediation-api
+          version: 1.0.0
+        paths:
+          /:
+            get:
+              operationId: ListRemediations
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/Remediations'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Retrieve available remediations
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-remediation-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /remediate:
+            post:
+              operationId: RemediateResource
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/RemediateResource'
+              responses:
+                '200':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Synchronously remediate resource for an account.
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-remediation-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /remediateasync:
+            post:
+              operationId: RemediateResourceAsync
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/RemediateResource'
+              responses:
+                '200':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Asynchronously remediate resource for an account.
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-remediation-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+        produces:
+          - application/json
+        schemes:
+          - https
+        securityDefinitions:
+          sigv4:
+            in: header
+            name: Authorization
+            type: apiKey
+            x-amazon-apigateway-authtype: awsSigv4
+        swagger: '2.0'
+        x-amazon-apigateway-request-validators:
+          validate-all:
+            validateRequestBody: true
+            validateRequestParameters: true
+      EndpointConfiguration: REGIONAL
+      Name: panther-remediation-api
+      StageName: v1
+      TracingEnabled:
+        Ref: TracingEnabled
+    Type: AWS::Serverless::Api
+  ResourcesApi:
+    Properties:
+      DefinitionBody:
+        consumes:
+          - application/json
+        definitions:
+          AddResourceEntry:
+            properties:
+              attributes:
+                $ref: '#/definitions/attributes'
+              id:
+                $ref: '#/definitions/resourceId'
+              integrationId:
+                $ref: '#/definitions/integrationId'
+              integrationType:
+                $ref: '#/definitions/integrationType'
+              type:
+                $ref: '#/definitions/resourceType'
+            required:
+              - attributes
+              - id
+              - integrationId
+              - integrationType
+              - type
+            type: object
+          AddResources:
+            properties:
+              resources:
+                items:
+                  $ref: '#/definitions/AddResourceEntry'
+                maxItems: 500
+                minItems: 1
+                type: array
+            required:
+              - resources
+            type: object
+          DeleteEntry:
+            properties:
+              id:
+                $ref: '#/definitions/resourceId'
+            required:
+              - id
+            type: object
+          DeleteResources:
+            properties:
+              resources:
+                items:
+                  $ref: '#/definitions/DeleteEntry'
+                maxItems: 1000
+                minItems: 1
+                type: array
+                uniqueItems: true
+            required:
+              - resources
+            type: object
+          Error:
+            properties:
+              message:
+                description: Error message
+                type: string
+            required:
+              - message
+            type: object
+          OrgOverview:
+            properties:
+              resources:
+                items:
+                  $ref: '#/definitions/ResourceTypeSummary'
+                type: array
+            required:
+              - resources
+            type: object
+          Paging:
+            properties:
+              thisPage:
+                minimum: 0
+                type: integer
+              totalItems:
+                minimum: 0
+                type: integer
+              totalPages:
+                minimum: 0
+                type: integer
+            required:
+              - thisPage
+              - totalPages
+              - totalItems
+            type: object
+          Resource:
+            properties:
+              attributes:
+                $ref: '#/definitions/attributes'
+              complianceStatus:
+                $ref: '#/definitions/complianceStatus'
+              deleted:
+                $ref: '#/definitions/deleted'
+              id:
+                $ref: '#/definitions/resourceId'
+              integrationId:
+                $ref: '#/definitions/integrationId'
+              integrationType:
+                $ref: '#/definitions/integrationType'
+              lastModified:
+                $ref: '#/definitions/lastModified'
+              type:
+                $ref: '#/definitions/resourceType'
+            required:
+              - attributes
+              - complianceStatus
+              - deleted
+              - id
+              - integrationId
+              - integrationType
+              - lastModified
+              - type
+            type: object
+          ResourceList:
+            properties:
+              paging:
+                $ref: '#/definitions/Paging'
+              resources:
+                items:
+                  $ref: '#/definitions/Resource'
+                type: array
+            required:
+              - paging
+              - resources
+            type: object
+          ResourceTypeSummary:
+            properties:
+              count:
+                minimum: 0
+                type: integer
+              type:
+                $ref: '#/definitions/resourceType'
+            required:
+              - count
+              - type
+            type: object
+          attributes:
+            description: Resource attributes
+            maxProperties: 500
+            minProperties: 1
+            type: object
+          complianceStatus:
+            description: Pass/fail compliance status
+            enum:
+              - ERROR
+              - FAIL
+              - PASS
+            type: string
+          deleted:
+            description: True if the resource has been deleted
+            type: boolean
+          integrationId:
+            description: Resource is from this source integration
+            pattern: '[a-f0-9\-]{36}'
+            type: string
+          integrationType:
+            description: Resource lives in this type of account
+            enum:
+              - aws
+            type: string
+          lastModified:
+            description: When the resource state was last updated in the Panther database
+            format: date-time
+            type: string
+          resourceId:
+            description: Unique resource identifier
+            maxLength: 5000
+            minLength: 1
+            type: string
+          resourceType:
+            description: Resource type
+            maxLength: 100
+            minLength: 1
+            type: string
+        info:
+          contact:
+            email: support@runpanther.io
+            name: Panther Labs
+            url: https://runpanther.io/about
+          description: Tracks resource state and modification history
+          title: panther-resources-api
+          version: 1.0.0
+        parameters:
+          resourceId:
+            description: URL-encoded unique resource identifier
+            in: query
+            maxLength: 2000
+            minLength: 1
+            name: resourceId
+            required: true
+            type: string
+        paths:
+          /delete:
+            post:
+              operationId: DeleteResources
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/DeleteResources'
+              responses:
+                '200':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Delete resources across multiple accounts
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /list:
+            get:
+              operationId: ListResources
+              parameters:
+                - description: Only include resources with a specific compliance status
+                  enum:
+                    - ERROR
+                    - FAIL
+                    - PASS
+                  in: query
+                  name: complianceStatus
+                  type: string
+                - description: Only include resources which are or are not deleted
+                  in: query
+                  name: deleted
+                  type: boolean
+                - description: Only include resources whose ID contains this URL-encoded
+                    substring (case-insensitive)
+                  in: query
+                  name: idContains
+                  type: string
+                - description: Only include resources from this source integration
+                  in: query
+                  name: integrationId
+                  pattern: '[a-f0-9\-]{36}'
+                  type: string
+                - description: Only include resources from this integration type
+                  enum:
+                    - aws
+                  in: query
+                  name: integrationType
+                  type: string
+                - collectionFormat: csv
+                  description: Only include resources which match one of these types
+                  in: query
+                  items:
+                    type: string
+                  name: types
+                  type: array
+                  uniqueItems: true
+                - collectionFormat: csv
+                  description: Resource fields to select (default - all except attributes)
+                  in: query
+                  items:
+                    type: string
+                  name: fields
+                  type: array
+                  uniqueItems: true
+                - default: id
+                  description: Name of the field to sort by
+                  enum:
+                    - complianceStatus
+                    - id
+                    - lastModified
+                    - type
+                  in: query
+                  name: sortBy
+                  type: string
+                - default: ascending
+                  description: Sort direction
+                  enum:
+                    - ascending
+                    - descending
+                  in: query
+                  name: sortDir
+                  type: string
+                - default: 25
+                  description: Number of items in each page of results
+                  in: query
+                  maximum: 1000
+                  minimum: 1
+                  name: pageSize
+                  type: integer
+                - default: 1
+                  description: Which page of results to retrieve
+                  in: query
+                  minimum: 1
+                  name: page
+                  type: integer
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/ResourceList'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: List resources for a customer account
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /org-overview:
+            get:
+              operationId: GetOrgOverview
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/OrgOverview'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Get an overview of the resources in an organization
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+          /resource:
+            get:
+              operationId: GetResource
+              parameters:
+                - $ref: '#/parameters/resourceId'
+              responses:
+                '200':
+                  description: OK
+                  schema:
+                    $ref: '#/definitions/Resource'
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '404':
+                  description: Resource does not exist
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Get resource details
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+            post:
+              operationId: AddResources
+              parameters:
+                - in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/AddResources'
+              responses:
+                '201':
+                  description: OK
+                '400':
+                  description: Bad request
+                  schema:
+                    $ref: '#/definitions/Error'
+                '500':
+                  description: Internal server error
+              security:
+                - sigv4: []
+              summary: Add or replace resources across one or more accounts
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                passthroughBehavior: never
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api/invocations
+              x-amazon-apigateway-request-validator: validate-all
+        produces:
+          - application/json
+        schemes:
+          - https
+        securityDefinitions:
+          sigv4:
+            in: header
+            name: Authorization
+            type: apiKey
+            x-amazon-apigateway-authtype: awsSigv4
+        swagger: '2.0'
+        x-amazon-apigateway-request-validators:
+          validate-all:
+            validateRequestBody: true
+            validateRequestParameters: true
+      EndpointConfiguration: REGIONAL
+      Name: panther-resources-api
+      StageName: v1
+      TracingEnabled:
+        Ref: TracingEnabled
+    Type: AWS::Serverless::Api
+Transform: AWS::Serverless-2016-10-31
