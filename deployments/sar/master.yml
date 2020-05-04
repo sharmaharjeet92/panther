@@ -6,9 +6,17 @@
 # Publish: AWS_REGION=us-east-2 dev -- sam publish -t sam-bootstrap-gateway.yml --region us-east-2
 # Deploy: AWS_REGION=us-east-2 dev -- sam deploy --template-file sam-master.yml --stack-name panther-sar --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
 
+# Lots of "fringe" stuff that needs to be reworked
+# Python layer, acm certificates, onboarding, nested stacks like alarms
+
 # TODO: python layer
 # TODO: EC2 flow logs
-# TODO: ECS cluster
+
+Parameters:
+  Debug:
+    Type: String
+    AllowedValues: [true, false]
+    Default: false
 
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
@@ -20,7 +28,7 @@ Metadata:
     Description: Master Panther template
     Author: Panther Labs
     HomePageUrl: https://runpanther.io
-    SemanticVersion: 0.1.2
+    SemanticVersion: 0.1.5
     SourceCodeUrl: https://github.com/panther-labs/panther
 
 Resources:
@@ -29,7 +37,7 @@ Resources:
     Properties:
       Location:
         ApplicationId: arn:aws:serverlessrepo:us-east-2:101802775469:applications/panther-bootstrap
-        SemanticVersion: 0.1.2
+        SemanticVersion: 0.1.3
 
   BootstrapGateway:
     Type: AWS::Serverless::Application

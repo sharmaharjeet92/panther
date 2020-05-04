@@ -38,6 +38,7 @@ Parameters:
     Default: false
 
   # If no custom layer is provided, 'mage deploy' will have uploaded a layer here:
+  # TODO: packaging could take care of this instead
   SourceBucket:
     Type: String
     Description: S3 bucket for the Python analysis layer

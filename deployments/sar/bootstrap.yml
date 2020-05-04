@@ -32,7 +32,7 @@ Metadata:
     Description: The first stack in the Panther Enterprise deployment
     Author: Panther Labs
     HomePageUrl: https://runpanther.io
-    SemanticVersion: 0.1.2
+    SemanticVersion: 0.1.5
     SourceCodeUrl: https://github.com/panther-labs/panther
 
 # This stack has resources which take a long time or have generated IDs that we need.
@@ -478,11 +478,32 @@ Resources:
             ]
           }
 
-  # TODO: add this manually
-  #  WebApplicationCluster:
-  #    Type: AWS::ECS::Cluster
-  #    Properties:
-  #      ClusterName: panther-web-cluster
+  CustomResourceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: main
+      Description: Panther custom CloudFormation resources
+      FunctionName: panther-cfn-custom-resources
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+      Handler: main
+      MemorySize: 128
+      Runtime: go1.x
+      Timeout: 900
+      Policies:
+        - Id: EcsManagement
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: ecs:*
+              Resource: '*'
+
+  WebApplicationCluster:
+    Type: Custom::ECS-Cluster
+    Properties:
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      ClusterName: panther-web-cluster
 
   ########## Networking ##########
   # A VPC that will be used by our stack's security group, added to our web-service
