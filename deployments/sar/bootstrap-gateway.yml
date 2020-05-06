@@ -7,11 +7,11 @@
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: panther-bootstrap-gateway
+    Name: panther-bootstrap-gateway-enterprise
     Author: Panther Labs
     Description: API gateway
     HomePageUrl: https://runpanther.io
-    SemanticVersion: 0.1.1
+    SemanticVersion: 1.0.0
     SourceCodeUrl: https://github.com/panther-labs/panther
 
 AWSTemplateFormatVersion: '2010-09-09'

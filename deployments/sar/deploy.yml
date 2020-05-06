@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Deploy Panther
+
+Resources:
+  Panther:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-2:101802775469:applications/panther-enterprise
+        SemanticVersion: 1.0.1

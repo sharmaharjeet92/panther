@@ -28,11 +28,11 @@ Description: The very first Panther stack - static resources which don't require
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: panther-bootstrap
+    Name: panther-bootstrap-enterprise
     Description: The first stack in the Panther Enterprise deployment
     Author: Panther Labs
     HomePageUrl: https://runpanther.io
-    SemanticVersion: 0.1.5
+    SemanticVersion: 1.0.1
     SourceCodeUrl: https://github.com/panther-labs/panther
 
 # This stack has resources which take a long time or have generated IDs that we need.
@@ -386,7 +386,7 @@ Resources:
         RestrictPublicBuckets: true
       AccessControl: Private
       VersioningConfiguration:
-        Status: Enabled
+        Status: Suspended
 
   ########## Cognito ##########
   # MFA is configured for the user pool via the Go SDK rather than CloudFormation.
@@ -437,11 +437,27 @@ Resources:
         - AttributeDataType: String
           Mutable: true
           Name: family_name
+        - # Store the user's assigned roleID as a custom attribute.
+          # Cognito does not yet support required custom attributes,
+          # but a role is required for all users and the API enforces this.
+          AttributeDataType: String
+          Mutable: true
+          Name: role_id
+          StringAttributeConstraints:
+            MinLength: '36' # uuid length
+            MaxLength: '36'
       UsernameAttributes:
         - email
       UserPoolAddOns:
         AdvancedSecurityMode: ENFORCED
       UserPoolName: panther-users
+
+  ResourceReadGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      Description: View resources and ther compliance status
+      GroupName: ResourceRead
+      UserPoolId: !Ref UserPool
 
   AppClient:
     Type: AWS::Cognito::UserPoolClient
@@ -478,32 +494,32 @@ Resources:
             ]
           }
 
-  CustomResourceFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: main
-      Description: Panther custom CloudFormation resources
-      FunctionName: panther-cfn-custom-resources
-      Environment:
-        Variables:
-          AWS_ACCOUNT_ID: !Ref AWS::AccountId
-      Handler: main
-      MemorySize: 128
-      Runtime: go1.x
-      Timeout: 900
-      Policies:
-        - Id: EcsManagement
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: ecs:*
-              Resource: '*'
+  #  CustomResourceFunction:
+  #    Type: AWS::Serverless::Function
+  #    Properties:
+  #      CodeUri: main
+  #      Description: Panther custom CloudFormation resources
+  #      FunctionName: panther-cfn-custom-resources
+  #      Environment:
+  #        Variables:
+  #          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+  #      Handler: main
+  #      MemorySize: 128
+  #      Runtime: go1.x
+  #      Timeout: 900
+  #      Policies:
+  #        - Id: EcsManagement
+  #          Version: 2012-10-17
+  #          Statement:
+  #            - Effect: Allow
+  #              Action: ecs:*
+  #              Resource: '*'
 
-  WebApplicationCluster:
-    Type: Custom::ECS-Cluster
-    Properties:
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
-      ClusterName: panther-web-cluster
+  #  WebApplicationCluster:
+  #    Type: Custom::ECS-Cluster
+  #    Properties:
+  #      ServiceToken: !GetAtt CustomResourceFunction.Arn
+  #      ClusterName: panther-web-cluster
 
   ########## Networking ##########
   # A VPC that will be used by our stack's security group, added to our web-service
@@ -677,32 +693,32 @@ Resources:
       IpProtocol: '-1'
       SourceSecurityGroupId: !Ref PublicLoadBalancerSecurityGroup
 
-  PublicLoadBalancerListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      Certificates:
-        - CertificateArn: arn:aws:acm:us-east-2:101802775469:certificate/31a7d9e4-3274-4cdb-b005-06bbbe712250
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroup
-          Type: forward
-      LoadBalancerArn: !Ref PublicLoadBalancer
-      Port: 443
-      Protocol: HTTPS
-      SslPolicy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
-
-  # Create a rule on the load balancer for routing traffic to the target group
-  LoadBalancerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref TargetGroup
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - '*'
-      ListenerArn: !Ref PublicLoadBalancerListener
-      Priority: 1
+  #  PublicLoadBalancerListener:
+  #    Type: AWS::ElasticLoadBalancingV2::Listener
+  #    Properties:
+  #      Certificates:
+  #        - CertificateArn: arn:aws:acm:us-east-2:101802775469:certificate/31a7d9e4-3274-4cdb-b005-06bbbe712250
+  #      DefaultActions:
+  #        - TargetGroupArn: !Ref TargetGroup
+  #          Type: forward
+  #      LoadBalancerArn: !Ref PublicLoadBalancer
+  #      Port: 443
+  #      Protocol: HTTPS
+  #      SslPolicy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+  #
+  #  # Create a rule on the load balancer for routing traffic to the target group
+  #  LoadBalancerRule:
+  #    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  #    Properties:
+  #      Actions:
+  #        - Type: forward
+  #          TargetGroupArn: !Ref TargetGroup
+  #      Conditions:
+  #        - Field: path-pattern
+  #          Values:
+  #            - '*'
+  #      ListenerArn: !Ref PublicLoadBalancerListener
+  #      Priority: 1
 
   ########## Appsync ##########
   AppsyncServiceRole:
