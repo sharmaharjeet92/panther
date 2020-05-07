@@ -228,12 +228,16 @@ module.exports = {
         {},
         {
           inject: true,
-          template: path.resolve(__dirname, 'public/index.ejs'),
-          filename: './index.html',
-          templateParameters: {
-            GRAPHQL_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
-            AWS_REGION: process.env.AWS_REGION,
-          },
+          // We are using `html-loader` here for an EJS template (instead of the `ejs-loader`).
+          // The reason for that is that we have an EJS template, filled with template parameters
+          // that are going to be replaced in runtime. HtmlWebpackPlugin throws an error if those
+          // parameters are not provided during build time and there was no way to get around it.
+          // Basically, if those were undefined during build time, the EJS failed to compile. The
+          // only way to bypass that is to force HtmlWebpackPlugin to treat this template as a
+          // simple HTML and leave those template parameters untouched. Of course, we couldn't just
+          // remove this plugin entirely, since we need it for the CSS/JS tag injection
+          template: `!!html-loader!${path.resolve(__dirname, 'public/index.ejs')}`,
+          filename: './index.ejs',
         },
         // If we are in production, we make sure to also minify the HTML
         isEnvProduction
