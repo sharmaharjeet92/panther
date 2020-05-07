@@ -31,6 +31,15 @@ Parameters:
   SecurityGroup:
     Type: String
     Description: Web app security group ID
+  GraphQLApiEndpoint:
+    Type: String
+    Description: The URL of the GraphQL API that the web application uses
+  UserPoolId:
+    Type: String
+    Description: The ID of the User Pool that holds all users of the Panther web app
+  AppClientId:
+    Type: String
+    Description: The ID of the App Client that handles the sign-in for the aforementioned user pool
 
   # Passed in from config file
   CloudWatchLogRetentionDays:
@@ -137,8 +146,24 @@ Resources:
           Environment:
             - Name: SERVER_PORT
               Value: !Ref Port
+
             - Name: NODE_ENV
               Value: production # optimizes the configuration of the front-end NodeJS server
+
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+
+            - Name: AWS_ACCOUNT_ID
+              Value: !Ref AWS::AccountId
+
+            - Name: WEB_APPLICATION_GRAPHQL_API_ENDPOINT
+              Value: !Ref GraphQLApiEndpoint
+
+            - Name: WEB_APPLICATION_USER_POOL_ID
+              Value: !Ref UserPoolId
+
+            - Name: WEB_APPLICATION_USER_POOL_CLIENT_ID
+              Value: !Ref AppClientId
           Essential: true
           Image: !Ref Image
           Interactive: false
