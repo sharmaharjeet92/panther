@@ -20,6 +20,10 @@
 const express = require('express');
 const expressStaticGzip = require('express-static-gzip');
 const path = require('path');
+const { validateRequiredEnv } = require('./utils');
+
+// Make sure that the min required ENV vars are present in the system
+validateRequiredEnv();
 
 // construct a mini server
 const app = express();

@@ -27,8 +27,4 @@ loadDotEnvVars('web/.env.sentry');
 
 // Add all the aws-related ENV vars to process.env
 loadDotEnvVars('out/.env.aws');
-
-// Make sure that the min required ENV vars are present in the system
-validateRequiredEnv();
-
 spawn('node_modules/.bin/webpack', ['--config', 'web/webpack.config.js'], { stdio: 'inherit' });
