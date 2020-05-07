@@ -41,7 +41,6 @@ ADD package.json package-lock.json ./
 RUN npm i
 
 # Mount the necessary source code
-ADD out/.env.aws out/.env.aws
 ADD web web
 
 # Build the project (additional ENV vars are read from a .env)
