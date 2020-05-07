@@ -74,6 +74,7 @@ func deployFrontend(
 		"AppClientId":                bootstrapOutputs["AppClientId"],
 		"Image":                      dockerImage,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"PantherVersion":             sh.Run("git", "describe", "--tags"),
 	}
 	return deployTemplate(awsSession, frontendTemplate, bucket, frontendStack, params)
 }

@@ -17,13 +17,10 @@
  */
 
 const { spawn } = require('child_process');
-const { loadDotEnvVars, getPantherDeploymentVersion, validateRequiredEnv } = require('./utils');
+const { loadDotEnvVars } = require('./utils');
 
 // Mark the Node environment as production in order to load the webpack configuration
 process.env.NODE_ENV = 'production';
-// Generate  a `PANTHER_VERSION` that the javascript error logging function running in the browser
-// is going to reference when reporting a crash
-process.env.PANTHER_VERSION = getPantherDeploymentVersion();
 
 // Add all the sentry-related ENV vars to process.env
 loadDotEnvVars('web/.env.sentry');

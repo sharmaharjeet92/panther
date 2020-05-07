@@ -27,16 +27,6 @@ function loadDotEnvVars(path) {
   }
 }
 
-function getPantherDeploymentVersion() {
-  try {
-    return execSync('git describe --tags')
-      .toString()
-      .trim();
-  } catch (err) {
-    throw new Error(chalk.red(err.message));
-  }
-}
-
 function validateRequiredEnv() {
   const requiredEnvs = [
     'AWS_ACCOUNT_ID',
@@ -54,4 +44,4 @@ function validateRequiredEnv() {
   return true;
 }
 
-module.exports = { loadDotEnvVars, getPantherDeploymentVersion, validateRequiredEnv };
+module.exports = { loadDotEnvVars, validateRequiredEnv };

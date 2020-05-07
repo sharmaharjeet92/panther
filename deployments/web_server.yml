@@ -51,6 +51,9 @@ Parameters:
   Image:
     Type: String
     Description: The container image to use for the front-end web application server
+  PantherVersion:
+    Type: String
+    Description: The semver of the current deployment (i.e. `v1.3.0`)
 
   CPU:
     Type: Number
@@ -164,6 +167,10 @@ Resources:
 
             - Name: WEB_APPLICATION_USER_POOL_CLIENT_ID
               Value: !Ref AppClientId
+
+            - Name: PANTHER_VERSION
+              Value: !Ref PantherVersion
+
           Essential: true
           Image: !Ref Image
           Interactive: false
