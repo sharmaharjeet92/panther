@@ -64,7 +64,7 @@ func deployFrontend(
 		return nil, err
 	}
 
-    currentCommitSha, err := sh.Output("git", "describe", "--tags")
+    gitVersion, err := sh.Output("git", "describe", "--tags")
     if err != nil {
         return nil, err
     }
@@ -79,7 +79,7 @@ func deployFrontend(
 		"AppClientId":                bootstrapOutputs["AppClientId"],
 		"Image":                      dockerImage,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-		"PantherVersion":             currentCommitSha,
+		"PantherVersion":             gitVersion,
 	}
 	return deployTemplate(awsSession, frontendTemplate, bucket, frontendStack, params)
 }
