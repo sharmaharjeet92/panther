@@ -17,8 +17,8 @@
  */
 
 import { ErrorResponse } from 'apollo-link-error';
-import {ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
-import {pantherConfig } from 'Source/config';
+import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
 import storage from 'Helpers/storage';
 import { Operation } from '@apollo/client';
 
