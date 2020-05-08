@@ -51,9 +51,6 @@ RUN npm run build
 #
 FROM node:13.2-alpine
 
-# Setup default port for fallback. This variable will be overriden on runtime by the associated ECS service.
-ENV SERVER_PORT=8080
-
 # Make sure we add a folder to not pollute our root
 RUN mkdir /code
 
@@ -72,7 +69,7 @@ ADD web/scripts web/scripts
 ## WARNING: Be careful not to add the package.json, since it will install all of your dependencies
 ## even when you explicitly try to install a single one
 #
-RUN npm install express express-static-gzip
+RUN npm install express express-static-gzip ejs
 
 # Run the express server to serve the assets
 CMD npm run serve

@@ -19,6 +19,8 @@
 import * as Yup from 'yup';
 import Auth from '@aws-amplify/auth';
 
+export const pantherConfig = JSON.parse(document.getElementById('__PANTHER_CONFIG__').innerHTML);
+
 // Initialize the Cognito client to the correct user pool
 Auth.configure({
   userPoolId: pantherConfig.WEB_APPLICATION_USER_POOL_ID,

@@ -26,9 +26,9 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { pantherConfig } from 'Source/config';
 import JsonViewer from 'Components/JsonViewer';
 import { getArnRegexForService } from 'Helpers/utils';
-import {pantherConfig} from "Source/constants";
 
 const SNS_TOPIC_POLICY = {
   Version: '2012-10-17',

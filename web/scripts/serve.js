@@ -58,9 +58,19 @@ const addHeaders = (req, res, next) => {
   next();
 };
 
+const PANTHER_CONFIG = {
+  PANTHER_VERSION: process.env.PANTHER_VERSION,
+  AWS_REGION: process.env.AWS_REGION,
+  AWS_ACCOUNT_ID: process.env.AWS_ACCOUNT_ID,
+  WEB_APPLICATION_GRAPHQL_API_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
+  WEB_APPLICATION_USER_POOL_CLIENT_ID: process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID,
+  WEB_APPLICATION_USER_POOL_ID: process.env.WEB_APPLICATION_USER_POOL_ID,
+};
+
+// Add Security headers to all responses
 app.use('*', addHeaders);
 
-// allow static assets to be served from the /dist folder
+// Allow static assets to be served from the /dist folder
 app.use(
   expressStaticGzip(path.resolve(__dirname, '../dist'), {
     enableBrotli: true,
@@ -82,8 +92,9 @@ app.get('/healthcheck', (req, res) => {
 });
 
 // Resolve all other requests to the index.html file
+app.set('view engine', 'ejs');
 app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, '../dist/index.html'));
+  res.render(path.resolve(__dirname, '../public/index.ejs'), { PANTHER_CONFIG });
 });
 
 // initialize server
