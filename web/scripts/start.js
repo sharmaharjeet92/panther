@@ -16,11 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const { loadDotEnvVars } = require('./utils');
 
 // Mark the Node environment as development in order to load the proper webpack configuration
 process.env.NODE_ENV = 'development';
+
+// Add a versioning based on the latest git (for development purposes only)
+process.env.PANTHER_VERSION = execSync('git describe --tags');
 
 // Add all the aws-related ENV vars to process.env
 loadDotEnvVars('out/.env.aws');

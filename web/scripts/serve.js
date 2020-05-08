@@ -20,10 +20,7 @@
 const express = require('express');
 const expressStaticGzip = require('express-static-gzip');
 const path = require('path');
-const { validateRequiredEnv } = require('./utils');
-
-// Make sure that the min required ENV vars are present in the system
-validateRequiredEnv();
+const { getAppTemplateParams } = require('./utils');
 
 // construct a mini server
 const app = express();
@@ -58,15 +55,6 @@ const addHeaders = (req, res, next) => {
   next();
 };
 
-const PANTHER_CONFIG = {
-  PANTHER_VERSION: process.env.PANTHER_VERSION,
-  AWS_REGION: process.env.AWS_REGION,
-  AWS_ACCOUNT_ID: process.env.AWS_ACCOUNT_ID,
-  WEB_APPLICATION_GRAPHQL_API_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
-  WEB_APPLICATION_USER_POOL_CLIENT_ID: process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID,
-  WEB_APPLICATION_USER_POOL_ID: process.env.WEB_APPLICATION_USER_POOL_ID,
-};
-
 // Add Security headers to all responses
 app.use('*', addHeaders);
 
@@ -94,7 +82,7 @@ app.get('/healthcheck', (req, res) => {
 // Resolve all other requests to the index.html file
 app.set('view engine', 'ejs');
 app.get('*', (req, res) => {
-  res.render(path.resolve(__dirname, '../public/index.ejs'), { PANTHER_CONFIG });
+  res.render(path.resolve(__dirname, '../dist/index.ejs'), getAppTemplateParams());
 });
 
 // initialize server
