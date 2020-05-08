@@ -21,9 +21,9 @@ import Auth from '@aws-amplify/auth';
 
 // Initialize the Cognito client to the correct user pool
 Auth.configure({
-  userPoolId: process.env.WEB_APPLICATION_USER_POOL_ID,
-  userPoolWebClientId: process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID,
-  region: process.env.AWS_REGION,
+  userPoolId: pantherConfig.WEB_APPLICATION_USER_POOL_ID,
+  userPoolWebClientId: pantherConfig.WEB_APPLICATION_USER_POOL_CLIENT_ID,
+  region: pantherConfig.AWS_REGION,
 });
 
 // Set the defaults for some of the pre-implemented yup funcs

@@ -19,6 +19,7 @@
 import React from 'react';
 import { Alert, Box, useSnackbar, Text, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import { pantherConfig } from 'Source/config';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/CompanyInformationForm';
 import Panel from 'Components/Panel';
@@ -87,7 +88,7 @@ const GeneralSettingsContainer: React.FC = () => {
                   Version
                 </Text>
                 <Text color="grey500" size="large" fontWeight="bold">
-                  {process.env.PANTHER_VERSION || 'N/A'}
+                  {pantherConfig.PANTHER_VERSION || 'N/A'}
                 </Text>
               </Flex>
               <Flex mb={6}>
@@ -95,7 +96,7 @@ const GeneralSettingsContainer: React.FC = () => {
                   AWS Account ID
                 </Text>
                 <Text color="grey500" size="large" fontWeight="bold">
-                  {process.env.AWS_ACCOUNT_ID || 'N/A'}
+                  {pantherConfig.AWS_ACCOUNT_ID || 'N/A'}
                 </Text>
               </Flex>
               <Flex>
@@ -103,7 +104,7 @@ const GeneralSettingsContainer: React.FC = () => {
                   AWS Region
                 </Text>
                 <Text color="grey500" size="large" fontWeight="bold">
-                  {process.env.AWS_REGION || 'N/A'}
+                  {pantherConfig.AWS_REGION || 'N/A'}
                 </Text>
               </Flex>
             </Box>

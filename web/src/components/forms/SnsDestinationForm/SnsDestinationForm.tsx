@@ -28,6 +28,7 @@ import BaseDestinationForm, {
 } from 'Components/forms/BaseDestinationForm';
 import JsonViewer from 'Components/JsonViewer';
 import { getArnRegexForService } from 'Helpers/utils';
+import {pantherConfig} from "Source/constants";
 
 const SNS_TOPIC_POLICY = {
   Version: '2012-10-17',
@@ -37,7 +38,7 @@ const SNS_TOPIC_POLICY = {
       Effect: 'Allow',
       Action: 'sns:Publish',
       Principal: {
-        AWS: `arn:aws:iam::${process.env.AWS_ACCOUNT_ID}:root`,
+        AWS: `arn:aws:iam::${pantherConfig.AWS_ACCOUNT_ID}:root`,
       },
       Resource: '<Destination-SNS-Topic-ARN>',
     },
