@@ -29,7 +29,6 @@ function loadDotEnvVars(path) {
 
 function validateRequiredEnv() {
   const requiredEnvs = [
-    'PANTHER_VERSION',
     'AWS_ACCOUNT_ID',
     'AWS_REGION',
     'WEB_APPLICATION_GRAPHQL_API_ENDPOINT',
