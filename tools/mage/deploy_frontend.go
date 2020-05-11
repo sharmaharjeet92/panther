@@ -64,11 +64,6 @@ func deployFrontend(
 		return nil, err
 	}
 
-	gitVersion, err := sh.Output("git", "describe", "--tags")
-	if err != nil {
-		return nil, err
-	}
-
 	params := map[string]string{
 		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
