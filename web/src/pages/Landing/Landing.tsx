@@ -23,6 +23,7 @@ import logo from 'Source/assets/panther-minimal-logo.svg';
 import urls from 'Source/urls';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import { pantherConfig } from 'Source/config';
+import withSEO from 'Hoc/withSEO';
 
 const LandingPage: React.FC = () => {
   return (
@@ -217,4 +218,4 @@ const LandingPage: React.FC = () => {
   );
 };
 
-export default LandingPage;
+export default withSEO({ title: 'Dashboard' })(LandingPage);

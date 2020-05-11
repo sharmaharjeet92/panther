@@ -23,12 +23,13 @@ import { pantherConfig } from 'Source/config';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/CompanyInformationForm';
 import Panel from 'Components/Panel';
+import withSEO from 'Hoc/withSEO';
 import { useGetGeneralSettings } from './graphql/getGeneralSettings.generated';
 import { useUpdateGeneralSettings } from './graphql/updateGeneralSettings.generated';
 import GeneralSettingsPageSkeleton from './Skeleton';
 
 // Parent container for the general settings section
-const GeneralSettingsContainer: React.FC = () => {
+const GeneralSettingsPage: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
 
   const {
@@ -127,4 +128,4 @@ const GeneralSettingsContainer: React.FC = () => {
   );
 };
 
-export default GeneralSettingsContainer;
+export default withSEO({ title: 'General Settings' })(GeneralSettingsPage);

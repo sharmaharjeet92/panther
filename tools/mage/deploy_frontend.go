@@ -72,6 +72,7 @@ func deployFrontend(
 	params := map[string]string{
 		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
+		"ElbArn":                     bootstrapOutputs["LoadBalancerArn"],
 		"ElbTargetGroup":             bootstrapOutputs["LoadBalancerTargetGroup"],
 		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
 		"GraphQLApiEndpoint":         bootstrapOutputs["GraphQLApiEndpoint"],
@@ -79,6 +80,7 @@ func deployFrontend(
 		"AppClientId":                bootstrapOutputs["AppClientId"],
 		"Image":                      dockerImage,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CertificateArn":             settings.Web.CertificateArn,
 		"PantherVersion":             gitVersion,
 	}
 	return deployTemplate(awsSession, frontendTemplate, bucket, frontendStack, params)
