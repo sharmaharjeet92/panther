@@ -31,6 +31,10 @@ var inputValidator = validator.New()
 //
 // Out must be a pointer to a struct with appropriate `validate` tags
 func parseProperties(params map[string]interface{}, out interface{}) error {
+	if len(params) == 0 {
+		return nil
+	}
+
 	// We could manually use reflection on the output struct, which would be marginally faster
 	// but unnecessarily complex and error-prone.
 	//
@@ -40,11 +44,11 @@ func parseProperties(params map[string]interface{}, out interface{}) error {
 		return fmt.Errorf("parameter json marshal failed: %v", err)
 	}
 
-	if err = jsoniter.Unmarshal(json, &out); err != nil {
+	if err = jsoniter.Unmarshal(json, out); err != nil {
 		return fmt.Errorf("parameter validation failed: %v", err)
 	}
 
-	if err = inputValidator.Struct(&out); err != nil {
+	if err = inputValidator.Struct(out); err != nil {
 		return fmt.Errorf("parameter validation failed: %v", err)
 	}
 

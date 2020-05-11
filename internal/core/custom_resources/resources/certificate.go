@@ -175,7 +175,9 @@ func importIamCert(cert, privateKey []byte) (string, error) {
 func deleteCert(certArn string) error {
 	parsedArn, err := arn.Parse(certArn)
 	if err != nil {
-		return fmt.Errorf("failed to parse %s as arn: %v", certArn, err)
+		// If creation fails before the cert was successfully created, the resourceID will be "error"
+		zap.L().Warn("failed to parse physicalResourceId as arn - skipping delete", zap.Error(err))
+		return nil
 	}
 
 	backoffConfig := backoff.NewExponentialBackOff()

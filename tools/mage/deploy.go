@@ -146,7 +146,7 @@ func Deploy() {
 		logger.Fatal(err)
 	}
 
-	logger.Infof("deploy: finished successfully in %s", time.Since(start))
+	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
 	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
 }
 
@@ -409,6 +409,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	logResults(results, "deploy", 3, count+2, len(allStacks))
 
 	// Metric filters have to be deployed after all log groups have been created
+	// TODO - this stack will go away completely! Yay
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
 		c <- goroutineResult{summary: metricFilterStack, err: err}

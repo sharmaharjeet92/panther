@@ -60,6 +60,11 @@ func customLambdaMetricFilters(_ context.Context, event cfn.Event) (physicalID s
 			return
 		}
 
+		// We store successful filter name suffixes at the end of the physicalID.
+		// If the create fails halfway through, CFN will rollback and request deletion for the resource.
+		// This way, we can delete whichever filters have been added so far.
+		physicalID = fmt.Sprintf("custom:metric-filters:%s:memory", props.LogGroupName)
+
 		// Logged warnings
 		warnFilter := warnFilterGo
 		if props.LambdaRuntime == "Python" {
@@ -69,6 +74,7 @@ func customLambdaMetricFilters(_ context.Context, event cfn.Event) (physicalID s
 		if err != nil {
 			return
 		}
+		physicalID += "/warns"
 
 		// Logged errors
 		errorFilter := errorFilterGo
@@ -79,9 +85,9 @@ func customLambdaMetricFilters(_ context.Context, event cfn.Event) (physicalID s
 		if err != nil {
 			return
 		}
+		physicalID += "/errors"
 
-		// Store all filter name suffixes in the physicalID for easy deletion later
-		return fmt.Sprintf("custom:metric-filters:%s:errors/memory/warns", props.LogGroupName), nil, nil
+		return
 
 	case cfn.RequestUpdate:
 		// TODO - replace existing event filters
@@ -91,8 +97,9 @@ func customLambdaMetricFilters(_ context.Context, event cfn.Event) (physicalID s
 		physicalID = event.PhysicalResourceID
 		split := strings.Split(physicalID, ":")
 		if len(split) != 4 {
-			err = fmt.Errorf("invalid physicalResourceId %s - expected 3 colons", event.PhysicalResourceID)
-			return
+			// If creation fails before any filters were created, the resourceID will be "error"
+			zap.L().Warn("invalid physicalResourceId - skipping delete")
+			return event.PhysicalResourceID, nil, nil
 		}
 
 		logGroupName := split[2]
@@ -146,5 +153,9 @@ func putMetricFilter(logGroupName, filterPattern, metricName, metricValue string
 			},
 		},
 	})
-	return fmt.Errorf("failed to put %s metric filter: %v", metricName, err)
+
+	if err != nil {
+		return fmt.Errorf("failed to put %s metric filter: %v", metricName, err)
+	}
+	return nil
 }
