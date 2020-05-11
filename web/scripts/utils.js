@@ -36,9 +36,9 @@ function getAppTemplateParams() {
     WEB_APPLICATION_USER_POOL_ID: process.env.WEB_APPLICATION_USER_POOL_ID,
   };
 
-  const keys = Object.keys(PANTHER_CONFIG).filter(key => PANTHER_CONFIG[key] === undefined);
-  if (keys.length) {
-    throw new Error(chalk.red(`Couldn't find the following ENV vars: ${keys.join(', ')}`));
+  const missingKeys = Object.keys(PANTHER_CONFIG).filter(key => PANTHER_CONFIG[key] === undefined);
+  if (missingKeys.length) {
+    throw new Error(chalk.red(`Couldn't find the following ENV vars: ${missingKeys.join(', ')}`));
   }
 
   return { PANTHER_CONFIG };
