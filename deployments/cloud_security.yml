@@ -489,7 +489,7 @@ Resources:
       LogGroupName: /aws/lambda/panther-compliance-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
-  ComplianeApiMetricFilters:
+  ComplianceApiMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
       LogGroupName: !Ref ComplianceApiLogGroup
