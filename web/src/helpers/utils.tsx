@@ -237,7 +237,7 @@ export const getStableVersion = (version: string) =>
   version.indexOf('-') > 0 ? version.substring(0, version.indexOf('-')) : version;
 
 export const generateDocUrl = (baseUrl: string, version: string) => {
-  if (version && version !== 'custom') {
+  if (version) {
     return `${baseUrl}/v/${getStableVersion(version)}-docs`;
   }
   return baseUrl;
