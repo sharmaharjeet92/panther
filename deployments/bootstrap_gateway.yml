@@ -145,7 +145,6 @@ Resources:
   CustomResourceMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
-      LambdaRuntime: Go
       LogGroupName: !Ref CustomResourceLogGroup
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 

@@ -45,7 +45,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Creates error/warn/memory metric filters on a Lambda function's CloudWatch log group.
 	//
 	// Parameters:
-	//     LambdaRuntime: String (required: "Go" or "Python")
+	//     LambdaRuntime: String ("Go" or "Python", defaults to "Go")
 	//     LogGroupName:  String (required)
 	// Outputs: None
 	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME:$FILTER1/$FILTER2/...

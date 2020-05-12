@@ -39,96 +39,92 @@ const (
 )
 
 type LambdaMetricFiltersProperties struct {
-	LambdaRuntime string `validate:"required,oneof=Go Python"`
+	LambdaRuntime string `validate:"omitempty,oneof=Go Python"`
 	LogGroupName  string `validate:"required"`
 }
 
 // Add metric filters to a Lambda function's CloudWatch log group
-func customLambdaMetricFilters(_ context.Context, event cfn.Event) (physicalID string, outputs map[string]interface{}, err error) {
+func customLambdaMetricFilters(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	var props LambdaMetricFiltersProperties
-	if err = parseProperties(event.ResourceProperties, &props); err != nil {
-		return
+	if err := parseProperties(event.ResourceProperties, &props); err != nil {
+		return "", nil, err
+	}
+
+	// If not specified, use Go as the default Lambda runtime
+	if props.LambdaRuntime == "" {
+		props.LambdaRuntime = "Go"
 	}
 
 	switch event.RequestType {
 	case cfn.RequestCreate:
-		lambdaName := lambdaNameFromLogGroup(props.LogGroupName)
-
-		// Track max memory usage
-		err = putMetricFilter(props.LogGroupName, memoryFilter, lambdaName+"-memory", "$max_memory_used_value")
-		if err != nil {
-			return
-		}
-
-		// We store successful filter name suffixes at the end of the physicalID.
-		// If the create fails halfway through, CFN will rollback and request deletion for the resource.
-		// This way, we can delete whichever filters have been added so far.
-		physicalID = fmt.Sprintf("custom:metric-filters:%s:memory", props.LogGroupName)
-
-		// Logged warnings
-		warnFilter := warnFilterGo
-		if props.LambdaRuntime == "Python" {
-			warnFilter = warnFilterPython
-		}
-		err = putMetricFilter(props.LogGroupName, warnFilter, lambdaName+"-warns", "1")
-		if err != nil {
-			return
-		}
-		physicalID += "/warns"
-
-		// Logged errors
-		errorFilter := errorFilterGo
-		if props.LambdaRuntime == "Python" {
-			errorFilter = errorFilterPython
-		}
-		err = putMetricFilter(props.LogGroupName, errorFilter, lambdaName+"-errors", "1")
-		if err != nil {
-			return
-		}
-		physicalID += "/errors"
-
-		return
+		physicalID, err := putMetricFilterGroup(props.LogGroupName, props.LambdaRuntime)
+		return physicalID, nil, err
 
 	case cfn.RequestUpdate:
-		// TODO - replace existing event filters
-		return event.PhysicalResourceID, nil, nil
+		var oldProps LambdaMetricFiltersProperties
+		if err := parseProperties(event.OldResourceProperties, &oldProps); err == nil {
+			if oldProps.LambdaRuntime == "" {
+				oldProps.LambdaRuntime = "Go"
+			}
 
-	case cfn.RequestDelete:
-		physicalID = event.PhysicalResourceID
-		split := strings.Split(physicalID, ":")
-		if len(split) != 4 {
-			// If creation fails before any filters were created, the resourceID will be "error"
-			zap.L().Warn("invalid physicalResourceId - skipping delete")
-			return event.PhysicalResourceID, nil, nil
-		}
-
-		logGroupName := split[2]
-		lambdaName := lambdaNameFromLogGroup(logGroupName)
-
-		for _, filterSuffix := range strings.Split(split[3], "/") {
-			filterName := lambdaName + "-" + filterSuffix
-			zap.L().Info("deleting metric filter", zap.String("name", filterName))
-			_, err = getCloudWatchLogsClient().DeleteMetricFilter(&cloudwatchlogs.DeleteMetricFilterInput{
-				FilterName:   &filterName,
-				LogGroupName: &logGroupName,
-			})
-
-			if err != nil {
-				if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
-					zap.L().Info("metric filter has already been deleted")
-					err = nil
-				} else {
-					err = fmt.Errorf("failed to delete %s metric filter %s: %v", logGroupName, filterName, err)
-					return
-				}
+			// After filling in default values, the old and new resource properties are the same.
+			if props == oldProps {
+				zap.L().Info("old and new properties are the same - no changes needed")
+				return event.PhysicalResourceID, nil, nil
 			}
 		}
-		return
+
+		// Either the log group or the lambda runtime changed - put new metric filters.
+		//
+		// If the log group changed, the physicalID will change as well and CFN will automatically
+		// request deletion of the old metric filters.
+		//
+		// If the runtime changed, we will overwrite the existing metric filters with new values
+		// (but the same name) and the physicalID will remain the same.
+		physicalID, err := putMetricFilterGroup(props.LogGroupName, props.LambdaRuntime)
+		return physicalID, nil, err
+
+	case cfn.RequestDelete:
+		return event.PhysicalResourceID, nil, deleteMetricFilterGroup(event.PhysicalResourceID)
 
 	default:
-		err = fmt.Errorf("unknown request type %s", event.RequestType)
-		return
+		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
+}
+
+func putMetricFilterGroup(logGroup, runtime string) (string, error) {
+	lambdaName := lambdaNameFromLogGroup(logGroup)
+
+	// Track max memory usage
+	if err := putMetricFilter(logGroup, memoryFilter, lambdaName+"-memory", "$max_memory_used_value"); err != nil {
+		return "", err
+	}
+
+	// We store successful filter name suffixes at the end of the physicalID.
+	// If the create fails halfway through, CFN will rollback and request deletion for the resource.
+	// This way, we can delete whichever filters have been added so far.
+	physicalID := fmt.Sprintf("custom:metric-filters:%s:memory", logGroup)
+
+	// Logged warnings
+	warnFilter := warnFilterGo
+	if runtime == "Python" {
+		warnFilter = warnFilterPython
+	}
+	if err := putMetricFilter(logGroup, warnFilter, lambdaName+"-warns", "1"); err != nil {
+		return physicalID, err
+	}
+	physicalID += "/warns"
+
+	// Logged errors
+	errorFilter := errorFilterGo
+	if runtime == "Python" {
+		errorFilter = errorFilterPython
+	}
+	if err := putMetricFilter(logGroup, errorFilter, lambdaName+"-errors", "1"); err != nil {
+		return physicalID, err
+	}
+
+	return physicalID + "/errors", nil
 }
 
 // For metric/filter names, use the Lambda function name as a prefix
@@ -157,5 +153,36 @@ func putMetricFilter(logGroupName, filterPattern, metricName, metricValue string
 	if err != nil {
 		return fmt.Errorf("failed to put %s metric filter: %v", metricName, err)
 	}
+	return nil
+}
+
+func deleteMetricFilterGroup(physicalID string) error {
+	split := strings.Split(physicalID, ":")
+	if len(split) != 4 {
+		// If creation fails before any filters were created, the resourceID will be "error"
+		zap.L().Warn("invalid physicalResourceId - skipping delete")
+		return nil
+	}
+
+	logGroupName := split[2]
+	lambdaName := lambdaNameFromLogGroup(logGroupName)
+
+	for _, filterSuffix := range strings.Split(split[3], "/") {
+		filterName := lambdaName + "-" + filterSuffix
+		zap.L().Info("deleting metric filter", zap.String("name", filterName))
+		_, err := getCloudWatchLogsClient().DeleteMetricFilter(&cloudwatchlogs.DeleteMetricFilterInput{
+			FilterName:   &filterName,
+			LogGroupName: &logGroupName,
+		})
+
+		if err != nil {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
+				zap.L().Info("metric filter has already been deleted")
+				return nil
+			}
+			return fmt.Errorf("failed to delete %s metric filter %s: %v", logGroupName, filterName, err)
+		}
+	}
+
 	return nil
 }
