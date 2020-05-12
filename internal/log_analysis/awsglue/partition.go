@@ -75,6 +75,7 @@ func (gp *GluePartition) GetPartitionLocation() string {
 	return "s3://" + gp.s3Bucket + "/" + gp.gm.GetPartitionPrefix(gp.time)
 }
 
+// GetPartitionLocation takes an S3 path for an object and returns just the part of the patch associated with the partition
 func GetPartitionLocation(s3Path string) (string, error) {
 	gluePartition, err := GetPartitionFromS3Path(s3Path)
 	if err != nil {

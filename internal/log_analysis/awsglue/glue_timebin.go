@@ -116,7 +116,7 @@ func (tb GlueTableTimebin) PartitionHasData(client s3iface.S3API, t time.Time, t
 				hasData = true
 			}
 		}
-		return false // "To stop iterating, return false from the fn function."
+		return !hasData // "To stop iterating, return false from the fn function."
 	})
 
 	return hasData, err
