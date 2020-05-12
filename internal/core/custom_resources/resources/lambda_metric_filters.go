@@ -178,7 +178,7 @@ func deleteMetricFilterGroup(physicalID string) error {
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
 				zap.L().Info("metric filter has already been deleted")
-				return nil
+				continue
 			}
 			return fmt.Errorf("failed to delete %s metric filter %s: %v", logGroupName, filterName, err)
 		}

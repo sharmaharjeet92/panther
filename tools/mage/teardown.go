@@ -204,12 +204,7 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 			return
 		}
 
-		// TODO - how to delete if it doesn't exist
-		if strings.Contains(result.stackName, "skipped") {
-			logger.Infof("    √ %s (%d/%d)", result.stackName, finishCount, len(allStacks))
-		} else {
-			logger.Infof("    √ %s successfully deleted (%d/%d)", result.stackName, finishCount, len(allStacks))
-		}
+		logger.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, len(allStacks))
 	}
 
 	// The stackset must be deleted before the StackSetExecutionRole and the StackSetAdminRole
