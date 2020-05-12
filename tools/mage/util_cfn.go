@@ -44,7 +44,6 @@ var allStacks = []string{
 	frontendStack,
 	glueStack,
 	logAnalysisStack,
-	metricFilterStack,
 	onboardStack,
 }
 

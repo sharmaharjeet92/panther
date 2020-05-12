@@ -53,6 +53,7 @@ var (
 // CI Run all required checks for a pull request
 func (Test) CI() {
 	// Formatting modifies files (and may generate new ones), so we need to run this first
+	// TODO - require loggroups + metric filters for every lambda function
 	fmtErr := testFmtAndGeneratedFiles()
 	results := make(chan goroutineResult)
 	tasks := []struct {
